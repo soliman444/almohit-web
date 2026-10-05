@@ -1,0 +1,43 @@
+{
+  "name": "almohit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 8069",
+    "build": "next build",
+    "start": "next start -p 8069",
+    "lint": "eslint .",
+    "test": "tsx --test src/lib/money.test.ts src/lib/commerce-rules.test.ts src/lib/variant-rules.test.ts src/lib/currency.test.ts src/lib/currency-rules.test.ts src/lib/media-system.test.ts src/lib/storefront-filters.test.ts",
+    "db:generate": "prisma generate --config prisma7.config.ts",
+    "db:migrate": "prisma migrate dev --config prisma7.config.ts",
+    "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
+    "db:studio": "prisma studio --config prisma7.config.ts",
+    "db:seed": "prisma migrate deploy --config prisma7.config.ts && tsx prisma/seed.ts",
+    "db:setup": "prisma migrate deploy --config prisma7.config.ts && tsx prisma/seed.ts",
+    "postinstall": "prisma generate --config prisma7.config.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "argon2": "^0.44.0",
+    "motion": "^14.0.0",
+    "next": "16.3.8",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.3.8",
+    "prisma": "^7.10.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.0"
+  }
+}
