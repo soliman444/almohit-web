@@ -1,0 +1,32 @@
+$kind: http-request
+description: "type: delivery | invoice."
+url: "{{baseUrl}}/almohit/api/addresses"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "type": "delivery",
+      "name": "Shop delivery",
+      "street": "Street 1",
+      "street2": "",
+      "city": "Sanaa",
+      "zip": "",
+      "phone": "+967700000000",
+      "country_code": "YE"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && json.data && json.data.id != null) {
+
+        pm.collectionVariables.set("addressId", String(json.data.id));
+
+      }
+    language: text/javascript
+order: 2000

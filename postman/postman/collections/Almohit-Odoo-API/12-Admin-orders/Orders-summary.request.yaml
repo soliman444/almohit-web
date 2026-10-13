@@ -1,0 +1,8 @@
+$kind: http-request
+name: Orders summary
+order: 1000
+method: GET
+url: '{{baseUrl}}/almohit/api/admin/orders/summary'
+headers:
+  - key: Accept
+    value: application/json

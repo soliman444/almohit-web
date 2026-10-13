@@ -1,0 +1,9 @@
+$kind: http-request
+name: CORS preflight
+order: 2000
+method: OPTIONS
+url: '{{baseUrl}}/almohit/api/health'
+description: 'مسار OPTIONS العام `/almohit/api/<path>` لطلبات المتصفح.'
+headers:
+  - key: Accept
+    value: application/json

@@ -1,0 +1,37 @@
+$kind: http-request
+name: Create admin product
+order: 5000
+method: POST
+url: '{{baseUrl}}/almohit/api/admin/products'
+description: منتج بسيط. غيّر category_id إلى تصنيف موجود.
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "name": "Postman Test Product",
+        "sku": "PM-TEST-001",
+        "description": "Created from Postman",
+        "category_id": "{{categoryId}}",
+        "min_order_qty": 1,
+        "sale_ok": true,
+        "wholesale_price": 10,
+        "cost": 6,
+        "quantity": 20
+      }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && json.data && json.data.id != null) {
+      
+        pm.collectionVariables.set("productId", String(json.data.id));
+      
+      }
+      

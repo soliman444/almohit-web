@@ -1,0 +1,30 @@
+$kind: http-request
+name: List admin orders
+order: 2000
+method: GET
+url: '{{baseUrl}}/almohit/api/admin/orders'
+headers:
+  - key: Accept
+    value: application/json
+queryParams:
+  - key: q
+    value: ''
+    disabled: true
+  - key: state
+    value: sale
+    disabled: true
+  - key: payment
+    value: not_paid
+    disabled: true
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {
+      
+        pm.collectionVariables.set("orderId", String(json.data[0].id));
+      
+      }
+      

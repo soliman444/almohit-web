@@ -1,0 +1,9 @@
+$kind: http-request
+name: Get cart
+order: 1000
+method: GET
+url: '{{baseUrl}}/almohit/api/cart'
+description: يتطلب عميل معتمد وغير مسوّق.
+headers:
+  - key: Accept
+    value: application/json

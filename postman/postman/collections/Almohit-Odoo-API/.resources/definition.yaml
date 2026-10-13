@@ -1,0 +1,67 @@
+$kind: collection
+name: Almohit Odoo API
+description: |-
+      كل مسارات `/almohit/api` من موديول `almohit_core` على Odoo 17.
+      
+      كيف تستخدمها:
+      1. استورد هذا الملف ثم ملف البيئة `Almohit-Odoo-API.postman_environment.json`.
+      2. اختر البيئة Almohit Local.
+      3. شغّل Health ثم Login (Portal أو Staff). سكربت Login يحفظ `session_id`.
+      4. الطلبات التالية ترسل الكوكي تلقائياً.
+      
+      الأدوار:
+      - Public: بدون جلسة
+      - Portal: تاجر / مشتري / موزع / مسوّق بعد Login
+      - Approved: سلة وطلب بعد موافقة التجارة
+      - Staff: مستخدم داخلي في أودو (ليس portal)
+      - Distributor: تحديث التوصيل
+      - Marketer: تسجيل تجار
+      
+      لا تضع كلمات المرور الحقيقية داخل المجموعة. استخدم متغيرات البيئة.
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8070'
+  - key: sessionId
+    value: ''
+  - key: productId
+    value: '1'
+  - key: categoryId
+    value: '1'
+  - key: brandId
+    value: '1'
+  - key: attributeId
+    value: '1'
+  - key: addressId
+    value: '1'
+  - key: cartLineId
+    value: '1'
+  - key: orderId
+    value: '1'
+  - key: invoiceId
+    value: '1'
+  - key: paymentId
+    value: '1'
+  - key: providerId
+    value: '1'
+  - key: transactionId
+    value: '1'
+  - key: deliveryId
+    value: '1'
+  - key: applicationId
+    value: '1'
+  - key: shippingAddressId
+    value: '1'
+  - key: invoiceAddressId
+    value: '1'
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      const sessionId = pm.collectionVariables.get("sessionId");
+      
+      if (sessionId) {
+      
+        pm.request.headers.upsert({ key: "Cookie", value: `session_id=${sessionId}` });
+      
+      }
+      

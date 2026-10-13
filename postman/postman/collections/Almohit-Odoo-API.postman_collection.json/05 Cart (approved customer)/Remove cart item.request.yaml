@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/cart/items/{{cartLineId}}"
+method: DELETE
+headers:
+  Accept: application/json
+order: 4000

@@ -1,0 +1,18 @@
+$kind: http-request
+name: Migration batch
+order: 3000
+method: POST
+url: '{{baseUrl}}/almohit/api/migration/catalog/batch'
+description: يكتب في الكتالوج ثم يعمل commit. لا تشغّله إلا إذا كنت تعرف phase والسجلات.
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "phase": "categories",
+        "records": []
+      }

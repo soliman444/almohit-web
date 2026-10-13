@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/admin/customers"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: q
+    value: ""
+    disabled: true
+  - key: status
+    value: approved
+    disabled: true
+  - key: role
+    value: merchant
+    disabled: true
+order: 2000

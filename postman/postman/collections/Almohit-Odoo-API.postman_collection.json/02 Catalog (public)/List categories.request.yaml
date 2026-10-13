@@ -1,0 +1,18 @@
+$kind: http-request
+description: تصنيفات المنتجات القابلة للبيع.
+url: "{{baseUrl}}/almohit/api/categories"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {
+
+        pm.collectionVariables.set("categoryId", String(json.data[0].id));
+
+      }
+    language: text/javascript
+order: 4000

@@ -1,0 +1,36 @@
+$kind: http-request
+description: "يرفض إذا كان الطلب معلّقاً أو معتمداً. payment_method: bank_transfer | cash | both."
+url: "{{baseUrl}}/almohit/api/trade/applications"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "company_name": "Test Shop",
+      "role": "merchant",
+      "tax_number": "123456",
+      "business_type": "Grocery",
+      "phone": "+967700000000",
+      "street": "Sanaa",
+      "city": "Sanaa",
+      "manager_name": "Manager",
+      "employee_name": "Employee",
+      "bank_account": "000111",
+      "payment_method": "both",
+      "notes": "Postman test"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && json.data && json.data.id != null) {
+
+        pm.collectionVariables.set("applicationId", String(json.data.id));
+
+      }
+    language: text/javascript
+order: 2000

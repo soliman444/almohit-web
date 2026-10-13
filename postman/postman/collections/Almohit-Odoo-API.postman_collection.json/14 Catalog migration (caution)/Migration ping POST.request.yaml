@@ -1,0 +1,11 @@
+$kind: http-request
+description: نفس فحص الصلاحية عبر POST.
+url: "{{baseUrl}}/almohit/api/migration/catalog/ping"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: "{}"
+order: 2000

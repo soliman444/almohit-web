@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/admin/trade/applications/{{applicationId}}/approve"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: "{}"
+order: 2000

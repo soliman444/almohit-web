@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/cart/items/{{cartLineId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "quantity": 6
+    }
+order: 3000

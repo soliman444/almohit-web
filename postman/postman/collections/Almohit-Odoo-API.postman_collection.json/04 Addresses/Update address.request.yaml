@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/addresses/{{addressId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "city": "Sanaa",
+      "street": "Updated street"
+    }
+order: 3000

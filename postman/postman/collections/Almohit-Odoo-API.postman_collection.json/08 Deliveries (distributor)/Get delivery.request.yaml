@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/deliveries/{{deliveryId}}"
+method: GET
+headers:
+  Accept: application/json
+order: 2000

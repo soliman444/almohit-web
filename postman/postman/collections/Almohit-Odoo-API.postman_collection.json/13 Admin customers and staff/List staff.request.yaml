@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/admin/staff"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: q
+    value: ""
+    disabled: true
+order: 4000

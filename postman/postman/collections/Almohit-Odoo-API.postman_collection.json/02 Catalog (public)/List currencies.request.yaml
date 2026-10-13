@@ -1,0 +1,7 @@
+$kind: http-request
+description: عملات العرض من أودو. عام.
+url: "{{baseUrl}}/almohit/api/currencies"
+method: GET
+headers:
+  Accept: application/json
+order: 1000

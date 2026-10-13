@@ -1,0 +1,14 @@
+$kind: http-request
+name: Clear cart
+order: 5000
+method: POST
+url: '{{baseUrl}}/almohit/api/cart/clear'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {}

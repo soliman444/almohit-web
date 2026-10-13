@@ -1,0 +1,33 @@
+$kind: http-request
+name: Create admin attribute
+order: 11000
+method: POST
+url: '{{baseUrl}}/almohit/api/admin/attributes'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "name": "Postman Size",
+        "values": [
+          "S",
+          "M",
+          "L"
+        ]
+      }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && json.data && json.data.id != null) {
+      
+        pm.collectionVariables.set("attributeId", String(json.data.id));
+      
+      }
+      

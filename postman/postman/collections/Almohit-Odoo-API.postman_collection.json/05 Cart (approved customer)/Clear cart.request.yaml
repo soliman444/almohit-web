@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/cart/clear"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: "{}"
+order: 5000

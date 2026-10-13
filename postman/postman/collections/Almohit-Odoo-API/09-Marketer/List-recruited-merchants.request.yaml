@@ -1,0 +1,9 @@
+$kind: http-request
+name: List recruited merchants
+order: 1000
+method: GET
+url: '{{baseUrl}}/almohit/api/marketer/merchants'
+description: فقط مسوّق معتمد.
+headers:
+  - key: Accept
+    value: application/json

@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/admin/categories"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Postman Category",
+      "parent_id": null
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && json.data && json.data.id != null) {
+
+        pm.collectionVariables.set("categoryId", String(json.data.id));
+
+      }
+    language: text/javascript
+order: 7000

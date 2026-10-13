@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/invoices/{{invoiceId}}/payment"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "provider_id": "{{providerId}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && json.data && json.data.id != null) {
+
+        pm.collectionVariables.set("transactionId", String(json.data.id));
+
+      }
+    language: text/javascript
+order: 4000

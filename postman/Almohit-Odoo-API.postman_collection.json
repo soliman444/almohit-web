@@ -1,0 +1,2674 @@
+{
+  "info": {
+    "name": "Almohit Odoo API",
+    "description": "كل مسارات `/almohit/api` من موديول `almohit_core` على Odoo 17.\n\nكيف تستخدمها:\n1. استورد هذا الملف ثم ملف البيئة `Almohit-Odoo-API.postman_environment.json`.\n2. اختر البيئة Almohit Local.\n3. شغّل Health ثم Login (Portal أو Staff). سكربت Login يحفظ `session_id`.\n4. الطلبات التالية ترسل الكوكي تلقائياً.\n\nالأدوار:\n- Public: بدون جلسة\n- Portal: تاجر / مشتري / موزع / مسوّق بعد Login\n- Approved: سلة وطلب بعد موافقة التجارة\n- Staff: مستخدم داخلي في أودو (ليس portal)\n- Distributor: تحديث التوصيل\n- Marketer: تسجيل تجار\n\nلا تضع كلمات المرور الحقيقية داخل المجموعة. استخدم متغيرات البيئة.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8070"
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "categoryId",
+      "value": "1"
+    },
+    {
+      "key": "brandId",
+      "value": "1"
+    },
+    {
+      "key": "attributeId",
+      "value": "1"
+    },
+    {
+      "key": "addressId",
+      "value": "1"
+    },
+    {
+      "key": "cartLineId",
+      "value": "1"
+    },
+    {
+      "key": "orderId",
+      "value": "1"
+    },
+    {
+      "key": "invoiceId",
+      "value": "1"
+    },
+    {
+      "key": "paymentId",
+      "value": "1"
+    },
+    {
+      "key": "providerId",
+      "value": "1"
+    },
+    {
+      "key": "transactionId",
+      "value": "1"
+    },
+    {
+      "key": "deliveryId",
+      "value": "1"
+    },
+    {
+      "key": "applicationId",
+      "value": "1"
+    },
+    {
+      "key": "shippingAddressId",
+      "value": "1"
+    },
+    {
+      "key": "invoiceAddressId",
+      "value": "1"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const sessionId = pm.collectionVariables.get(\"sessionId\");\n",
+          "if (sessionId) {\n",
+          "  pm.request.headers.upsert({ key: \"Cookie\", value: `session_id=${sessionId}` });\n",
+          "}\n"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Health",
+      "description": "بدون مصادقة",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "health"
+              ]
+            },
+            "description": "عام. بدون جلسة. يتحقق أن أودو والموديول يعملان."
+          },
+          "response": []
+        },
+        {
+          "name": "CORS preflight",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "health"
+              ]
+            },
+            "description": "مسار OPTIONS العام `/almohit/api/<path>` لطلبات المتصفح."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Auth",
+      "description": "Login يحفظ session_id في متغير المجموعة.",
+      "item": [
+        {
+          "name": "Register portal user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "إنشاء حساب بوابة. role: merchant | buyer | distributor | marketer. لا يسجّل الدخول تلقائياً.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Merchant\",\n  \"email\": \"{{portalEmail}}\",\n  \"password\": \"{{portalPassword}}\",\n  \"phone\": \"+967700000000\",\n  \"role\": \"merchant\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login portal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "يسجّل دخول عميل البوابة ويحفظ session_id من الرد.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{portalEmail}}\",\n  \"password\": \"{{portalPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.session_id) {\n",
+                  "  pm.collectionVariables.set(\"sessionId\", json.data.session_id);\n",
+                  "}\n",
+                  "const cookies = pm.response.headers.all().filter((h) => h.key.toLowerCase() === \"set-cookie\");\n",
+                  "for (const header of cookies) {\n",
+                  "  const match = String(header.value).match(/session_id=([^;]+)/);\n",
+                  "  if (match) {\n",
+                  "    pm.collectionVariables.set(\"sessionId\", match[1]);\n",
+                  "    break;\n",
+                  "  }\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "يسجّل دخول موظف أودو الداخلي. استخدمه قبل مجلدات Admin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.session_id) {\n",
+                  "  pm.collectionVariables.set(\"sessionId\", json.data.session_id);\n",
+                  "}\n",
+                  "const cookies = pm.response.headers.all().filter((h) => h.key.toLowerCase() === \"set-cookie\");\n",
+                  "for (const header of cookies) {\n",
+                  "  const match = String(header.value).match(/session_id=([^;]+)/);\n",
+                  "  if (match) {\n",
+                  "    pm.collectionVariables.set(\"sessionId\", match[1]);\n",
+                  "    break;\n",
+                  "  }\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "المستخدم الحالي. يحتاج session_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "إنهاء الجلسة. بعد النجاح أفرغ sessionId يدوياً أو أعد Login.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"sessionId\", \"\");\n"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Catalog (public)",
+      "description": "",
+      "item": [
+        {
+          "name": "List currencies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/currencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "currencies"
+              ]
+            },
+            "description": "عملات العرض من أودو. عام."
+          },
+          "response": []
+        },
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "products"
+              ]
+            },
+            "description": "كتالوج عام. الأسعار تظهر فقط لعميل معتمد في الجلسة."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"productId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "تفاصيل قالب المنتج."
+          },
+          "response": []
+        },
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "categories"
+              ]
+            },
+            "description": "تصنيفات المنتجات القابلة للبيع."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"categoryId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Trade KYC",
+      "description": "بعد Login portal.",
+      "item": [
+        {
+          "name": "Get my trade application",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/trade/application",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "trade",
+                "application"
+              ]
+            },
+            "description": "آخر طلب تجاري للحساب الحالي. Portal."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"applicationId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit trade application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/trade/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "trade",
+                "applications"
+              ]
+            },
+            "description": "يرفض إذا كان الطلب معلّقاً أو معتمداً. payment_method: bank_transfer | cash | both.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"Test Shop\",\n  \"role\": \"merchant\",\n  \"tax_number\": \"123456\",\n  \"business_type\": \"Grocery\",\n  \"phone\": \"+967700000000\",\n  \"street\": \"Sanaa\",\n  \"city\": \"Sanaa\",\n  \"manager_name\": \"Manager\",\n  \"employee_name\": \"Employee\",\n  \"bank_account\": \"000111\",\n  \"payment_method\": \"both\",\n  \"notes\": \"Postman test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"applicationId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Addresses",
+      "description": "",
+      "item": [
+        {
+          "name": "List addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "addresses"
+              ]
+            },
+            "description": "عناوين الشحن والفاتورة. Portal."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"addressId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "addresses"
+              ]
+            },
+            "description": "type: delivery | invoice.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"delivery\",\n  \"name\": \"Shop delivery\",\n  \"street\": \"Street 1\",\n  \"street2\": \"\",\n  \"city\": \"Sanaa\",\n  \"zip\": \"\",\n  \"phone\": \"+967700000000\",\n  \"country_code\": \"YE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"addressId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update address",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/addresses/{{addressId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "addresses",
+                "{{addressId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Sanaa\",\n  \"street\": \"Updated street\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete address",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/addresses/{{addressId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "addresses",
+                "{{addressId}}"
+              ]
+            },
+            "description": "أرشفة العنوان وليس حذفاً نهائياً."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Cart (approved customer)",
+      "description": "WHOLESALE_APPROVAL_REQUIRED إذا لم يُعتمد الحساب.",
+      "item": [
+        {
+          "name": "Get cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "cart"
+              ]
+            },
+            "description": "يتطلب عميل معتمد وغير مسوّق."
+          },
+          "response": []
+        },
+        {
+          "name": "Add cart item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "cart",
+                "items"
+              ]
+            },
+            "description": "product_id هو معرف product.product (المتغير) وليس القالب دائماً. خذ id من تفاصيل المنتج.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{productId}}\",\n  \"quantity\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update cart item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/cart/items/{{cartLineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "cart",
+                "items",
+                "{{cartLineId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove cart item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/cart/items/{{cartLineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "cart",
+                "items",
+                "{{cartLineId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/cart/clear",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "cart",
+                "clear"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Checkout and orders",
+      "description": "",
+      "item": [
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "checkout"
+              ]
+            },
+            "description": "يحول سلة المسودة إلى طلب مؤكد. املأ عناوين موجودة.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipping_address_id\": \"{{shippingAddressId}}\",\n  \"invoice_address_id\": \"{{invoiceAddressId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"orderId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "orders"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"orderId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get my order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 Invoices and payments",
+      "description": "",
+      "item": [
+        {
+          "name": "List invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "invoices"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"invoiceId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/invoices/{{invoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List payment providers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/payment/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "payment",
+                "providers"
+              ],
+              "query": [
+                {
+                  "key": "invoice_id",
+                  "value": "{{invoiceId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "اختياري invoice_id لتصفية المزودين حسب مبلغ الفاتورة."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"providerId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start invoice payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/invoices/{{invoiceId}}/payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "invoices",
+                "{{invoiceId}}",
+                "payment"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"{{providerId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"transactionId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List payment transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/payment/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "payment",
+                "transactions"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get payment transaction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/payment/transactions/{{transactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "payment",
+                "transactions",
+                "{{transactionId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "payments"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"paymentId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get payment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Deliveries (distributor)",
+      "description": "",
+      "item": [
+        {
+          "name": "List deliveries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/deliveries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "deliveries"
+              ]
+            },
+            "description": "فقط حساب موزع معتمد."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"deliveryId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get delivery",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/deliveries/{{deliveryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "deliveries",
+                "{{deliveryId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Update delivery status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/deliveries/{{deliveryId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "deliveries",
+                "{{deliveryId}}",
+                "status"
+              ]
+            },
+            "description": "status حسب تدفق أودو للبيكنج المعين للموزع.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Marketer",
+      "description": "",
+      "item": [
+        {
+          "name": "List recruited merchants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/marketer/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "marketer",
+                "merchants"
+              ]
+            },
+            "description": "فقط مسوّق معتمد."
+          },
+          "response": []
+        },
+        {
+          "name": "Recruit merchant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/marketer/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "marketer",
+                "merchants"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Recruited Merchant\",\n  \"email\": \"recruited.merchant@example.com\",\n  \"password\": \"ChangeMe-123456\",\n  \"company_name\": \"Recruited Shop\",\n  \"tax_number\": \"998877\",\n  \"street\": \"Street\",\n  \"city\": \"Sanaa\",\n  \"manager_name\": \"Manager\",\n  \"bank_account\": \"111222\",\n  \"payment_method\": \"bank_transfer\",\n  \"phone\": \"+967711111111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 Admin catalog",
+      "description": "Login staff أولاً.",
+      "item": [
+        {
+          "name": "Catalog stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/catalog-stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "catalog-stats"
+              ]
+            },
+            "description": "موظف داخلي."
+          },
+          "response": []
+        },
+        {
+          "name": "Product options",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/product-options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "product-options"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List admin products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category_id",
+                  "value": "{{categoryId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "sale",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "product",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"productId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get admin product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Create admin product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "products"
+              ]
+            },
+            "description": "منتج بسيط. غيّر category_id إلى تصنيف موجود.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test Product\",\n  \"sku\": \"PM-TEST-001\",\n  \"description\": \"Created from Postman\",\n  \"category_id\": \"{{categoryId}}\",\n  \"min_order_qty\": 1,\n  \"sale_ok\": true,\n  \"wholesale_price\": 10,\n  \"cost\": 6,\n  \"quantity\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"productId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List admin categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"categoryId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create admin category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Category\",\n  \"parent_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"categoryId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List admin brands",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "brands"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"brandId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create admin brand",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/brands",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "brands"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Brand\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"brandId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List admin attributes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/attributes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "attributes"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"attributeId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create admin attribute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/attributes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "attributes"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Size\",\n  \"values\": [\n    \"S\",\n    \"M\",\n    \"L\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && json.data && json.data.id != null) {\n",
+                  "  pm.collectionVariables.set(\"attributeId\", String(json.data.id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add attribute values",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/attributes/{{attributeId}}/values",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "attributes",
+                "{{attributeId}}",
+                "values"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": [\n    \"XL\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11 Admin trade",
+      "description": "",
+      "item": [
+        {
+          "name": "List trade applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/trade/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "trade",
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"applicationId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/trade/applications/{{applicationId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "trade",
+                "applications",
+                "{{applicationId}}",
+                "approve"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/trade/applications/{{applicationId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "trade",
+                "applications",
+                "{{applicationId}}",
+                "reject"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Incomplete documents\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12 Admin orders",
+      "description": "",
+      "item": [
+        {
+          "name": "Orders summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/orders/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "orders",
+                "summary"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List admin orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "state",
+                  "value": "sale",
+                  "disabled": true
+                },
+                {
+                  "key": "payment",
+                  "value": "not_paid",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\n",
+                  "if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {\n",
+                  "  pm.collectionVariables.set(\"orderId\", String(json.data[0].id));\n",
+                  "}\n"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get admin order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13 Admin customers and staff",
+      "description": "",
+      "item": [
+        {
+          "name": "Customers summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/customers/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "customers",
+                "summary"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "approved",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "merchant",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Staff summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/staff/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "staff",
+                "summary"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/admin/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "admin",
+                "staff"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14 Catalog migration (caution)",
+      "description": "خطير على البيانات. ليس لمسار المتجر اليومي.",
+      "item": [
+        {
+          "name": "Migration ping GET",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/migration/catalog/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "migration",
+                "catalog",
+                "ping"
+              ]
+            },
+            "description": "يتطلب أدمن نظام أو توكن الهجرة. للقراءة فقط."
+          },
+          "response": []
+        },
+        {
+          "name": "Migration ping POST",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/migration/catalog/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "migration",
+                "catalog",
+                "ping"
+              ]
+            },
+            "description": "نفس فحص الصلاحية عبر POST.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Migration batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/almohit/api/migration/catalog/batch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "almohit",
+                "api",
+                "migration",
+                "catalog",
+                "batch"
+              ]
+            },
+            "description": "يكتب في الكتالوج ثم يعمل commit. لا تشغّله إلا إذا كنت تعرف phase والسجلات.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phase\": \"categories\",\n  \"records\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

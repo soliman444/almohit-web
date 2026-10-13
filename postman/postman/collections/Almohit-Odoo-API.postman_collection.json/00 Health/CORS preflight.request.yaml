@@ -1,0 +1,7 @@
+$kind: http-request
+description: مسار OPTIONS العام `/almohit/api/<path>` لطلبات المتصفح.
+url: "{{baseUrl}}/almohit/api/health"
+method: OPTIONS
+headers:
+  Accept: application/json
+order: 2000

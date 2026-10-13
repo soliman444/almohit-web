@@ -1,0 +1,21 @@
+$kind: http-request
+name: Register portal user
+order: 1000
+method: POST
+url: '{{baseUrl}}/almohit/api/auth/register'
+description: 'إنشاء حساب بوابة. role: merchant | buyer | distributor | marketer. لا يسجّل الدخول تلقائياً.'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "name": "Test Merchant",
+        "email": "{{portalEmail}}",
+        "password": "{{portalPassword}}",
+        "phone": "+967700000000",
+        "role": "merchant"
+      }

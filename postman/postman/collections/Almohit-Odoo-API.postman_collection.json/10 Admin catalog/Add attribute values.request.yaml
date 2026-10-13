@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/admin/attributes/{{attributeId}}/values"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "values": [
+        "XL"
+      ]
+    }
+order: 12000

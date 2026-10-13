@@ -1,0 +1,36 @@
+$kind: http-request
+name: Create address
+order: 2000
+method: POST
+url: '{{baseUrl}}/almohit/api/addresses'
+description: 'type: delivery | invoice.'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "type": "delivery",
+        "name": "Shop delivery",
+        "street": "Street 1",
+        "street2": "",
+        "city": "Sanaa",
+        "zip": "",
+        "phone": "+967700000000",
+        "country_code": "YE"
+      }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && json.data && json.data.id != null) {
+      
+        pm.collectionVariables.set("addressId", String(json.data.id));
+      
+      }
+      

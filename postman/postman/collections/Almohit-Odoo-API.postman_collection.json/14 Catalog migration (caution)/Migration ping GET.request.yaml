@@ -1,0 +1,7 @@
+$kind: http-request
+description: يتطلب أدمن نظام أو توكن الهجرة. للقراءة فقط.
+url: "{{baseUrl}}/almohit/api/migration/catalog/ping"
+method: GET
+headers:
+  Accept: application/json
+order: 1000

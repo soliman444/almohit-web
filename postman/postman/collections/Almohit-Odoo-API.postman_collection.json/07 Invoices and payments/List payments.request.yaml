@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/payments"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |
+      const json = pm.response.json();
+
+      if (json && json.ok && Array.isArray(json.data) && json.data[0] && json.data[0].id != null) {
+
+        pm.collectionVariables.set("paymentId", String(json.data[0].id));
+
+      }
+    language: text/javascript
+order: 7000

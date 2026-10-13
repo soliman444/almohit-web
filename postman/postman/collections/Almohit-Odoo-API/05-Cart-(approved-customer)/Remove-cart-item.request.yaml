@@ -1,0 +1,8 @@
+$kind: http-request
+name: Remove cart item
+order: 4000
+method: DELETE
+url: '{{baseUrl}}/almohit/api/cart/items/{{cartLineId}}'
+headers:
+  - key: Accept
+    value: application/json

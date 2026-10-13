@@ -1,0 +1,28 @@
+$kind: http-request
+name: Create admin brand
+order: 9000
+method: POST
+url: '{{baseUrl}}/almohit/api/admin/brands'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "name": "Postman Brand"
+      }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && json.data && json.data.id != null) {
+      
+        pm.collectionVariables.set("brandId", String(json.data.id));
+      
+      }
+      

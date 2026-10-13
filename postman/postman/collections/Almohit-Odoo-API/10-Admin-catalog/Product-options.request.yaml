@@ -1,0 +1,8 @@
+$kind: http-request
+name: Product options
+order: 2000
+method: GET
+url: '{{baseUrl}}/almohit/api/admin/product-options'
+headers:
+  - key: Accept
+    value: application/json

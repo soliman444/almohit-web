@@ -1,0 +1,12 @@
+name: Almohit Local
+values:
+  - key: baseUrl
+    value: ''
+  - key: portalEmail
+    value: ''
+  - key: portalPassword
+    value: ''
+  - key: staffEmail
+    value: ''
+  - key: staffPassword
+    value: ''

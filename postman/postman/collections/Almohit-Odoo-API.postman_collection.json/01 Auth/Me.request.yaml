@@ -1,0 +1,7 @@
+$kind: http-request
+description: المستخدم الحالي. يحتاج session_id.
+url: "{{baseUrl}}/almohit/api/auth/me"
+method: GET
+headers:
+  Accept: application/json
+order: 4000

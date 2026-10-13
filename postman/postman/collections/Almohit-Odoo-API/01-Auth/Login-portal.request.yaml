@@ -1,0 +1,46 @@
+$kind: http-request
+name: Login portal
+order: 2000
+method: POST
+url: '{{baseUrl}}/almohit/api/auth/login'
+description: يسجّل دخول عميل البوابة ويحفظ session_id من الرد.
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+      {
+        "email": "{{portalEmail}}",
+        "password": "{{portalPassword}}"
+      }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const json = pm.response.json();
+      
+      if (json && json.ok && json.data && json.data.session_id) {
+      
+        pm.collectionVariables.set("sessionId", json.data.session_id);
+      
+      }
+      
+      const cookies = pm.response.headers.all().filter((h) => h.key.toLowerCase() === "set-cookie");
+      
+      for (const header of cookies) {
+      
+        const match = String(header.value).match(/session_id=([^;]+)/);
+      
+        if (match) {
+      
+          pm.collectionVariables.set("sessionId", match[1]);
+      
+          break;
+      
+        }
+      
+      }
+      

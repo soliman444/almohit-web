@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get payment transaction
+order: 6000
+method: GET
+url: '{{baseUrl}}/almohit/api/payment/transactions/{{transactionId}}'
+headers:
+  - key: Accept
+    value: application/json

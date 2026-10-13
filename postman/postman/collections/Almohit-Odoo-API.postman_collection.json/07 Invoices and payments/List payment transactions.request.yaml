@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/almohit/api/payment/transactions"
+method: GET
+headers:
+  Accept: application/json
+order: 5000
