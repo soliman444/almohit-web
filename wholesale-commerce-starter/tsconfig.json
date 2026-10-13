@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@/*": ["./apps/web/src/*"],
+      "@almohit/database": ["./packages/database/src/index.ts"],
+      "@almohit/contracts": ["./packages/contracts/src/index.ts"],
+      "@almohit/validation": ["./packages/validation/src/index.ts"],
+      "@almohit/config": ["./packages/config/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "apps/api/src/**/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/dist",
+    "packages/database/generated"
+  ]
+}
