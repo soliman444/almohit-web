@@ -9,29 +9,15 @@
   ],
   "scripts": {
     "dev": "npm run dev:web",
-    "typecheck": "tsc --noEmit -p packages/contracts/tsconfig.json && tsc --noEmit -p packages/validation/tsconfig.json && tsc --noEmit -p packages/config/tsconfig.json && tsc --noEmit -p packages/database/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json",
+    "typecheck": "tsc --noEmit -p packages/contracts/tsconfig.json && tsc --noEmit -p packages/validation/tsconfig.json && tsc --noEmit -p packages/config/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json",
     "dev:web": "npm run dev -w @almohit/web",
-    "build": "npm run build -w @almohit/database && npm run build -w @almohit/contracts && npm run build -w @almohit/validation && npm run build -w @almohit/config && npm run build -w @almohit/web",
+    "build": "npm run build -w @almohit/contracts && npm run build -w @almohit/validation && npm run build -w @almohit/config && npm run build -w @almohit/web",
     "build:web": "npm run build -w @almohit/web",
     "start": "npm run start -w @almohit/web",
-    "lint": "npm run lint -w @almohit/web --if-present",
-    "db:generate": "prisma generate --config prisma7.config.ts",
-    "db:migrate": "prisma migrate dev --config prisma7.config.ts",
-    "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
-    "db:studio": "prisma studio --config prisma7.config.ts",
-    "db:seed": "prisma migrate deploy --config prisma7.config.ts && tsx prisma/seed.ts",
-    "db:setup": "prisma migrate deploy --config prisma7.config.ts && tsx prisma/seed.ts",
-    "postinstall": "prisma generate --config prisma7.config.ts"
-  },
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^7.10.0"
+    "lint": "npm run lint -w @almohit/web --if-present"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "dotenv": "^17.2.3",
-    "prisma": "^7.10.0",
-    "tsx": "^4.20.6",
     "typescript": "^5.9.0"
   }
 }

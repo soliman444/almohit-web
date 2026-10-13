@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: [
-    "@almohit/database",
     "@almohit/contracts",
     "@almohit/validation",
     "@almohit/config",

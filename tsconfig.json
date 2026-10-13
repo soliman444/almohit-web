@@ -8,7 +8,6 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./apps/web/src/*"],
-      "@almohit/database": ["./packages/database/src/index.ts"],
       "@almohit/contracts": ["./packages/contracts/src/index.ts"],
       "@almohit/validation": ["./packages/validation/src/index.ts"],
       "@almohit/config": ["./packages/config/src/index.ts"]
@@ -19,7 +18,6 @@
   ],
   "exclude": [
     "**/node_modules",
-    "**/dist",
-    "packages/database/generated"
+    "**/dist"
   ]
 }

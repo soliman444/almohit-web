@@ -12,7 +12,6 @@ type OdooAdminAttribute = {
   name: string;
   values: Array<{ id: number; name: string }>;
 };
-import { VariantEditor, type VariantEditorProps } from "./variant-editor";
 
 type CategoryOption = { id: string; name: string; depth: number };
 type BrandOption = { id: string; name: string };
@@ -24,7 +23,6 @@ export function ProductForm({
   canEditPrice,
   error,
   product,
-  variantEditor,
   odooCreate = false,
   attributes = [],
   canCreateCategory = false,
@@ -63,7 +61,6 @@ export function ProductForm({
     priceAmount: string;
     costAmount?: string;
   };
-  variantEditor?: VariantEditorProps;
 }) {
   const savedType = product?.productType ?? "SIMPLE";
   const [productType, setProductType] = useState<"SIMPLE" | "VARIABLE">(odooCreate ? "SIMPLE" : savedType);
@@ -181,9 +178,6 @@ export function ProductForm({
         {saved && savedType === "VARIABLE" && !isVariable && (product?.variantCount ?? 0) > 0 && (
           <p className="error">This product has {product?.variantCount} variants. Switching to Simple will stop using them for stock and price.</p>
         )}
-        {!saved && isVariable && !odooCreate && (
-          <p className="muted">Save the product first to configure attributes and variants.</p>
-        )}
         {odooVariable && <OdooVariantCreate attributes={attributeList} onAttributesChange={setAttributeList} />}
         <div className="grid">
           <label className="field">Status
@@ -243,11 +237,10 @@ export function ProductForm({
             ? odooVariable
               ? "Variable storable product. Odoo generates native variants. Main image stays on the template; gallery images are extra product.image records. Optional per-variant images use image_variant_1920."
               : "Simple storable product. Main image is image_1920. Gallery images are extra native records and do not replace the primary image."
-            : "VIDEO and 360 types exist in the database. Current storage is image URLs only."}
+            : "Images are stored in Odoo."}
         </p>
         <button className="btn" type="submit">{product ? "Update product" : "Create product"}</button>
       </form>
-      {saved && isVariable && !odooCreate && variantEditor && <VariantEditor {...variantEditor} error={error} />}
     </div>
   );
 }
