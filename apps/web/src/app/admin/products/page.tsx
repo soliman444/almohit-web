@@ -16,7 +16,6 @@ import {
   rewriteAdminProductImage,
   withVariableWholesalePrices,
 } from "../../../lib/odoo/admin-products";
-import { staffCredentialsConfigured } from "../../../lib/odoo/staff";
 import { FiShoppingBag } from "react-icons/fi";
 
 const STATUSES = ["ACTIVE", "INACTIVE", "ARCHIVED"] as const;

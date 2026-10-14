@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requirePermission } from "../../lib/auth";
 import { safeApiCall } from "../../lib/api/safe";
 import { AdminHeader } from "../../components/admin/admin-ui";
-import { getOdooAdminCatalogStats, staffCredentialsConfigured } from "../../lib/odoo/admin-taxonomy";
+import { getOdooAdminCatalogStats } from "../../lib/odoo/admin-taxonomy";
 import { countOdooAdminCustomers, countOdooAdminStaff } from "../../lib/odoo/admin-customers";
 import { countOdooAdminOrders } from "../../lib/odoo/admin-orders";
 import { countOdooPendingTradeApplications } from "../../lib/odoo/admin-trade";
@@ -48,34 +48,27 @@ export default async function AdminPage() {
 }
 
 async function loadCatalogStats() {
-  if (!staffCredentialsConfigured()) {
-    return { products: "—", categories: "—", brands: "—" };
-  }
   const loaded = await safeApiCall(() => getOdooAdminCatalogStats());
   if (!loaded.ok) return { products: "—", categories: "—", brands: "—" };
   return loaded.data;
 }
 
 async function loadPendingTradeCount() {
-  if (!staffCredentialsConfigured()) return "—";
   const loaded = await safeApiCall(() => countOdooPendingTradeApplications());
   return loaded.ok ? loaded.data : "—";
 }
 
 async function loadOrderCount() {
-  if (!staffCredentialsConfigured()) return "—";
   const loaded = await safeApiCall(() => countOdooAdminOrders());
   return loaded.ok ? loaded.data : "—";
 }
 
 async function loadCustomerCount() {
-  if (!staffCredentialsConfigured()) return "—";
   const loaded = await safeApiCall(() => countOdooAdminCustomers());
   return loaded.ok ? loaded.data : "—";
 }
 
 async function loadStaffCount() {
-  if (!staffCredentialsConfigured()) return "—";
   const loaded = await safeApiCall(() => countOdooAdminStaff());
   return loaded.ok ? loaded.data : "—";
 }

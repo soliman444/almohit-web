@@ -3,7 +3,6 @@ import { createProductAction } from "../../../../lib/actions";
 import { hasPermission, requirePermission } from "../../../../lib/auth";
 import { AdminHeader } from "../../../../components/admin/admin-ui";
 import { brandSelectOptions, categorySelectOptions, listOdooAdminProductOptions } from "../../../../lib/odoo/admin-products";
-import { staffCredentialsConfigured } from "../../../../lib/odoo/staff";
 import { ProductForm } from "../product-form";
 
 export default async function NewProductPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {

@@ -12,8 +12,6 @@ import {
   rewriteAdminProductImage,
 } from "../../../../../lib/odoo/admin-products";
 import { parseOdooRecordId } from "../../../../../lib/odoo/catalog";
-import { staffCredentialsConfigured } from "../../../../../lib/odoo/staff";
-
 export default async function AdminProductEditPage({
   params,
 }: {

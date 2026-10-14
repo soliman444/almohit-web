@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader, StatusBadge } from "../../../components/admin/admin-ui";
-import { listOdooAdminOrders, staffCredentialsConfigured } from "../../../lib/odoo/admin-orders";
+import { listOdooAdminOrders } from "../../../lib/odoo/admin-orders";
 
 export const dynamic = "force-dynamic";
 
@@ -19,15 +19,6 @@ export default async function AdminOrdersPage({
   const q = queryValue(params.q);
   const status = queryValue(params.status);
   const payment = queryValue(params.payment);
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Orders" />
-        <p className="error">Odoo staff credentials are not configured. Orders are read from Odoo only.</p>
-      </div>
-    );
-  }
 
   let orders;
   try {

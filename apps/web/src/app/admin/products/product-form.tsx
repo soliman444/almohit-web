@@ -108,7 +108,7 @@ export function ProductForm({
         {error === "price" && <p className="error">Enter a valid wholesale price.</p>}
         {error === "cost" && <p className="error">Enter a valid cost.</p>}
         {error === "stock" && <p className="error">Enter a valid initial quantity, or leave it at zero.</p>}
-        {error === "odoo" && <p className="error">Odoo could not create this product. Check staff credentials and try again.</p>}
+        {error === "odoo" && <p className="error">Odoo could not create this product. Sign in as staff and try again.</p>}
         {error === "permission" && <p className="error">The Odoo staff account cannot create products.</p>}
         {error === "unavailable" && <p className="error">Odoo is temporarily unavailable.</p>}
         {clientError && <p className="error" role="alert">{clientError}</p>}

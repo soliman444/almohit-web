@@ -2,10 +2,7 @@ import { approveBusinessRequestAction, rejectBusinessRequestAction } from "../..
 import { requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader, StatusBadge } from "../../../components/admin/admin-ui";
-import {
-  listOdooAdminTradeApplications,
-  staffCredentialsConfigured,
-} from "../../../lib/odoo/admin-trade";
+import { listOdooAdminTradeApplications } from "../../../lib/odoo/admin-trade";
 
 const REQUEST_STATUSES = ["pending", "approved", "rejected"] as const;
 
@@ -18,15 +15,6 @@ export default async function BusinessRequestsPage({
   const params = await searchParams;
   const q = queryValue(params.q);
   const status = queryValue(params.status)?.toLowerCase() ?? "";
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Trade account requests" />
-        <p className="error">Odoo staff credentials are not configured. Trade requests are reviewed in Odoo only.</p>
-      </div>
-    );
-  }
 
   let requests;
   try {

@@ -8,15 +8,3 @@ export function getOdooApiUrl(): string {
 export function getOdooApiPrefix(): string {
   return "/almohit/api";
 }
-
-export function getOdooDb(): string {
-  return (process.env.ODOO_DB ?? "").trim();
-}
-
-export function getOdooStaffLogin(): string {
-  return (process.env.ODOO_STAFF_LOGIN ?? "").trim();
-}
-
-export function getOdooStaffPassword(): string {
-  return (process.env.ODOO_STAFF_PASSWORD ?? "").trim();
-}

@@ -1,5 +1,5 @@
 import { getOdooApiUrl } from "./config";
-import { odooStaffRequest, staffCredentialsConfigured } from "./staff";
+import { odooStaffRequest } from "./staff";
 import { mapPaymentTerm, type OdooPaymentTermPayload, type PaymentTerm } from "./types";
 
 export type OdooAdminCustomerPayload = {
@@ -133,4 +133,3 @@ export function odooBackendPartnerUrl(partnerId: number) {
   return `${getOdooApiUrl()}/web#id=${partnerId}&model=res.partner&view_type=form`;
 }
 
-export { staffCredentialsConfigured };

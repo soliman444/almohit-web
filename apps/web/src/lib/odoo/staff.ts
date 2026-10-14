@@ -3,10 +3,6 @@ import { odooRequest } from "./client";
 import { nextOdooCookies, readOdooSessionCookie } from "./cookies";
 import { getOdooStaffUser } from "./auth";
 
-export function staffCredentialsConfigured() {
-  return true;
-}
-
 export async function odooStaffRequest<T>(
   path: string,
   options: { method?: string; body?: unknown } = {},

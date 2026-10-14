@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createOdooCategoryFormAction } from "../../../../lib/actions";
 import { requirePermission } from "../../../../lib/auth";
 import { AdminHeader } from "../../../../components/admin/admin-ui";
-import { categoryParentOptions, listOdooAdminCategories, staffCredentialsConfigured } from "../../../../lib/odoo/admin-taxonomy";
+import { categoryParentOptions, listOdooAdminCategories } from "../../../../lib/odoo/admin-taxonomy";
 
 export default async function NewCategoryPage({
   searchParams,

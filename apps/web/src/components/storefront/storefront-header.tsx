@@ -11,11 +11,9 @@ import type { CartView } from "../../lib/cart-view";
 import { CartSessionProvider } from "./cart-session";
 import { HeaderBar } from "./header-bar";
 
-const STAFF_SESSION_COOKIE = "wholesale_session";
-
 async function hasStorefrontSessionCookie() {
   const jar = await cookies();
-  return Boolean(jar.get(ODOO_SESSION_COOKIE_NAME)?.value || jar.get(STAFF_SESSION_COOKIE)?.value);
+  return Boolean(jar.get(ODOO_SESSION_COOKIE_NAME)?.value);
 }
 
 export async function StorefrontHeader({

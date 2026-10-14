@@ -2,7 +2,7 @@ import Link from "next/link";
 import { hasPermission, requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader } from "../../../components/admin/admin-ui";
-import { listOdooAdminCategories, odooBackendCategoryUrl, staffCredentialsConfigured } from "../../../lib/odoo/admin-taxonomy";
+import { listOdooAdminCategories, odooBackendCategoryUrl } from "../../../lib/odoo/admin-taxonomy";
 
 export default async function AdminCategoriesPage({
   searchParams,
