@@ -73,6 +73,17 @@ export function ProductFinder({
               ))}
             </select>
           </label>
+          {brands.length > 0 && (
+            <label className="field">
+              Brand
+              <select name="brand" defaultValue={query.brand ?? ""}>
+                <option value="">All brands</option>
+                {brands.map((item) => (
+                  <option key={item.slug} value={item.slug}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field">
             Minimum order
             <select name="moq" defaultValue={query.moq ?? ""}>

@@ -14,15 +14,6 @@ export default async function AdminCategoriesPage({
   const q = queryValue(params.q).toLowerCase();
   const canCreate = hasPermission(admin, "category.create");
 
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Categories" actions={canCreate ? <Link className="btn" href="/admin/categories/new">New category</Link> : null} />
-        <p className="error">Odoo staff credentials are not configured. Categories are read from Odoo only.</p>
-      </div>
-    );
-  }
-
   let categories;
   try {
     categories = await listOdooAdminCategories();

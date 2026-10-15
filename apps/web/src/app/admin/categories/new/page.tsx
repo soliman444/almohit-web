@@ -12,15 +12,6 @@ export default async function NewCategoryPage({
   await requirePermission("category.create");
   const { error } = await searchParams;
 
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="New category" actions={<Link className="btn secondary" href="/admin/categories">Back to categories</Link>} />
-        <p className="error">Odoo staff credentials are not configured.</p>
-      </div>
-    );
-  }
-
   let parents;
   try {
     parents = categoryParentOptions(await listOdooAdminCategories());

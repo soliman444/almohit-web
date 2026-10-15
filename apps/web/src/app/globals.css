@@ -305,6 +305,13 @@ button, input, textarea, select { font: inherit; }
   color: var(--sf-muted);
 }
 .sf-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.sf-brand-options {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 auto 12px;
+  max-width: 1040px;
+  gap: 8px;
+}
 .sf-pill {
   display: inline-flex;
   align-items: center;
@@ -731,6 +738,8 @@ button, input, textarea, select { font: inherit; }
 .sf-heading-meta {
   display: flex;
   gap: 12px;
+  margin: 0 auto 12px;
+  max-width: 1040px;
   margin-bottom: 12px;
   font-size: 13px;
   color: var(--sf-muted);

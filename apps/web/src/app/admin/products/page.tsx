@@ -36,15 +36,6 @@ export default async function AdminProductsPage({
   const canCreate = hasPermission(admin, "product.create");
   const canUpdate = hasPermission(admin, "product.update");
 
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Products" actions={canCreate ? <Link className="btn" href="/admin/products/new">New product</Link> : null} />
-        <p className="error">Odoo staff credentials are not configured. The admin catalog reads Odoo only.</p>
-      </div>
-    );
-  }
-
   let products;
   let categories;
   try {

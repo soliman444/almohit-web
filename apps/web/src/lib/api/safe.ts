@@ -1,4 +1,4 @@
-import { ApiUnavailableError } from "./client";
+import { ApiClientError, ApiUnavailableError } from "./client";
 
 export type SafeApiResult<T> =
   | {
@@ -19,7 +19,10 @@ export async function safeApiCall<T>(
       data: await action(),
     };
   } catch (error) {
-    if (error instanceof ApiUnavailableError) {
+    if (
+      error instanceof ApiUnavailableError
+      || (error instanceof ApiClientError && error.status >= 500)
+    ) {
       return {
         ok: false,
         reason: "API_UNAVAILABLE",

@@ -8,14 +8,6 @@ import { ProductForm } from "../product-form";
 export default async function NewProductPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const admin = await requirePermission("product.create");
   const { error } = await searchParams;
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="New product" actions={<Link className="btn secondary" href="/admin/products">Back to products</Link>} />
-        <p className="error">Odoo staff credentials are not configured on the server. Product creation writes to Odoo only.</p>
-      </div>
-    );
-  }
 
   let options;
   try {

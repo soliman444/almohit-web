@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { MoneyAmount } from "@almohit/contracts";
 import type { StorefrontCategoryCard, StorefrontProduct } from "../storefront-types";
 import { ApiClientError } from "../api/client";
@@ -91,14 +92,14 @@ export function mapOdooPrice(payload: object, currency?: string | null): MoneyAm
   };
 }
 
-export async function listOdooProducts(cookies?: OdooCookieAdapter): Promise<StorefrontProduct[]> {
+export const listOdooProducts = cache(async (cookies?: OdooCookieAdapter): Promise<StorefrontProduct[]> => {
   const payload = await odooRequest<OdooCatalogProduct[]>("/products", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
   return (payload ?? []).map(mapOdooProduct);
-}
+});
 
 export async function getOdooProduct(id: number, cookies?: OdooCookieAdapter): Promise<StorefrontProduct | null> {
   try {
@@ -116,14 +117,14 @@ export async function getOdooProduct(id: number, cookies?: OdooCookieAdapter): P
   }
 }
 
-export async function listOdooCategories(cookies?: OdooCookieAdapter): Promise<StorefrontCategoryCard[]> {
+export const listOdooCategories = cache(async (cookies?: OdooCookieAdapter): Promise<StorefrontCategoryCard[]> => {
   const payload = await odooRequest<OdooCatalogCategory[]>("/categories", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
   return (payload ?? []).map(mapOdooCategory);
-}
+});
 
 export function filterOdooProducts(
   products: StorefrontProduct[],

@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="sf-count">Approved buyers see their group prices after sign-in. Staff use the same login as Odoo.</p>
           {error === "invalid" && <p className="error">Email or password is incorrect.</p>}
           {error === "unavailable" && <p className="error">The store service is temporarily unavailable. Please try again shortly.</p>}
-          <label className="sf-field">Email<input name="email" type="email" required autoComplete="email" /></label>
+          <label className="sf-field">Email<input name="email" required autoComplete="email" /></label>
           <label className="sf-field">Password<input name="password" type="password" required autoComplete="current-password" /></label>
           <OnceSubmit className="sf-btn" pendingLabel="Signing in…"><span>Sign in</span><span className="sf-arrow" aria-hidden>→</span></OnceSubmit>
           <p>No account yet? <Link className="sf-text-link" href="/register">Create account</Link></p>
