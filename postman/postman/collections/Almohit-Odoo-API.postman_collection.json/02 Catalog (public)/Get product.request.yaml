@@ -1,7 +1,0 @@
-$kind: http-request
-description: تفاصيل قالب المنتج.
-url: "{{baseUrl}}/almohit/api/products/{{productId}}"
-method: GET
-headers:
-  Accept: application/json
-order: 3000

@@ -1,9 +1,0 @@
-$kind: http-request
-name: Migration ping GET
-order: 1000
-method: GET
-url: '{{baseUrl}}/almohit/api/migration/catalog/ping'
-description: يتطلب أدمن نظام أو توكن الهجرة. للقراءة فقط.
-headers:
-  - key: Accept
-    value: application/json

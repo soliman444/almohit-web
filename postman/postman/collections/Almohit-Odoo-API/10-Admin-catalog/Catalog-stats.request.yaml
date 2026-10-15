@@ -1,9 +1,0 @@
-$kind: http-request
-name: Catalog stats
-order: 1000
-method: GET
-url: '{{baseUrl}}/almohit/api/admin/catalog-stats'
-description: موظف داخلي.
-headers:
-  - key: Accept
-    value: application/json

@@ -1,3 +1,0 @@
-$kind: collection
-description: Login يحفظ session_id في متغير المجموعة.
-order: 2000

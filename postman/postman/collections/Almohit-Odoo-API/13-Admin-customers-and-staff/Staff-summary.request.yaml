@@ -1,8 +1,0 @@
-$kind: http-request
-name: Staff summary
-order: 3000
-method: GET
-url: '{{baseUrl}}/almohit/api/admin/staff/summary'
-headers:
-  - key: Accept
-    value: application/json

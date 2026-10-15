@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/almohit/api/orders/{{orderId}}"
-method: GET
-headers:
-  Accept: application/json
-order: 3000

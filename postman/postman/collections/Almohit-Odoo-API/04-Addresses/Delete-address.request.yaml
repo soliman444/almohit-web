@@ -1,9 +1,0 @@
-$kind: http-request
-name: Delete address
-order: 4000
-method: DELETE
-url: '{{baseUrl}}/almohit/api/addresses/{{addressId}}'
-description: أرشفة العنوان وليس حذفاً نهائياً.
-headers:
-  - key: Accept
-    value: application/json

@@ -1,9 +1,0 @@
-$kind: http-request
-name: Health
-order: 1000
-method: GET
-url: '{{baseUrl}}/almohit/api/health'
-description: عام. بدون جلسة. يتحقق أن أودو والموديول يعملان.
-headers:
-  - key: Accept
-    value: application/json

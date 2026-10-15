@@ -1,9 +1,0 @@
-$kind: http-request
-name: List currencies
-order: 1000
-method: GET
-url: '{{baseUrl}}/almohit/api/currencies'
-description: عملات العرض من أودو. عام.
-headers:
-  - key: Accept
-    value: application/json

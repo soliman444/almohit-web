@@ -1,7 +1,0 @@
-$kind: http-request
-description: فقط مسوّق معتمد.
-url: "{{baseUrl}}/almohit/api/marketer/merchants"
-method: GET
-headers:
-  Accept: application/json
-order: 1000
