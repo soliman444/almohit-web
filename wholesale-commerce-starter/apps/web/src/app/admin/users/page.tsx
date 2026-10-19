@@ -1,17 +1,15 @@
 import Link from "next/link";
-import { createStaffUserAction } from "../../../lib/actions";
 import { requirePermission } from "../../../lib/auth";
-import { prisma } from "../../../lib/db/prisma";
-import { insensitiveContains, queryValue } from "../../../lib/admin-query";
+import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader, StatusBadge } from "../../../components/admin/admin-ui";
 import {
   listOdooAdminCustomers,
+  listOdooAdminStaff,
   odooBackendPartnerUrl,
-  staffCredentialsConfigured,
+  odooBackendUsersUrl,
+  odooBackendUserUrl,
 } from "../../../lib/odoo/admin-customers";
-import type { UserStatus } from "@almohit/database";
 
-const USER_STATUSES: UserStatus[] = ["ACTIVE", "INACTIVE", "SUSPENDED"];
 const TRADE_STATUSES = ["normal", "pending", "approved", "rejected"] as const;
 const APP_ROLES = ["merchant", "buyer", "distributor", "marketer"] as const;
 
@@ -31,49 +29,38 @@ export default async function UsersPage({
   const showStaff = type !== "customer";
   const showCustomers = type !== "staff";
 
-  const [staff, roles] = await Promise.all([
-    showStaff
-      ? prisma.user.findMany({
-          where: {
-            deletedAt: null,
-            customer: null,
-            ...(q ? { OR: [{ name: insensitiveContains(q) }, { email: insensitiveContains(q) }] } : {}),
-            ...(USER_STATUSES.includes(status as UserStatus) ? { status: status as UserStatus } : {}),
-          },
-          include: { roles: { include: { role: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 100,
-        })
-      : Promise.resolve([]),
-    prisma.role.findMany({ orderBy: { name: "asc" } }),
-  ]);
+  let staff: Awaited<ReturnType<typeof listOdooAdminStaff>> = [];
+  let staffError = "";
+  if (showStaff) {
+    try {
+      staff = await listOdooAdminStaff({ q });
+    } catch {
+      staffError = "Odoo staff users could not be loaded.";
+    }
+  }
 
   let customers: Awaited<ReturnType<typeof listOdooAdminCustomers>> = [];
   let customerError = "";
   if (showCustomers) {
-    if (!staffCredentialsConfigured()) {
-      customerError = "Odoo staff credentials are not configured. Trade customers are read from Odoo only.";
-    } else {
-      try {
-        customers = await listOdooAdminCustomers({
-          q,
-          status: TRADE_STATUSES.includes(status as (typeof TRADE_STATUSES)[number]) ? status : undefined,
-          role: APP_ROLES.includes(role as (typeof APP_ROLES)[number]) ? role : undefined,
-        });
-      } catch {
-        customerError = "Odoo customers could not be loaded.";
-      }
+    try {
+      customers = await listOdooAdminCustomers({
+        q,
+        status: TRADE_STATUSES.includes(status as (typeof TRADE_STATUSES)[number]) ? status : undefined,
+        role: APP_ROLES.includes(role as (typeof APP_ROLES)[number]) ? role : undefined,
+      });
+    } catch {
+      customerError = "Odoo customers could not be loaded.";
     }
   }
 
-  const count = (showStaff ? staff.length : 0) + (showCustomers && !customerError ? customers.length : 0);
+  const count = (showStaff && !staffError ? staff.length : 0) + (showCustomers && !customerError ? customers.length : 0);
 
   return (
     <div className="stack">
       <AdminHeader
         title="Users"
         count={count}
-        hint="Website staff stay here. Trade customers are Odoo portal partners."
+        hint="Staff and customers are Odoo users. Create or change access in Odoo."
       />
       <AdminFilters
         action="/admin/users"
@@ -81,16 +68,13 @@ export default async function UsersPage({
         qPlaceholder="Name or email"
         filters={[
           { name: "type", label: "Type", value: type, options: [{ value: "staff", label: "Staff" }, { value: "customer", label: "Customer" }] },
-          ...(showStaff
-            ? [{ name: "status", label: "Staff status", value: USER_STATUSES.includes(status as UserStatus) ? status : "", options: USER_STATUSES.map((item) => ({ value: item, label: item })) }]
-            : [{
+          ...(showCustomers && !showStaff
+            ? [{
               name: "status",
               label: "Trade status",
               value: TRADE_STATUSES.includes(status as (typeof TRADE_STATUSES)[number]) ? status : "",
               options: TRADE_STATUSES.map((item) => ({ value: item, label: item })),
-            }]),
-          ...(showCustomers && !showStaff
-            ? [{
+            }, {
               name: "role",
               label: "Role",
               value: APP_ROLES.includes(role as (typeof APP_ROLES)[number]) ? role : "",
@@ -101,23 +85,11 @@ export default async function UsersPage({
       />
 
       {showStaff && (
-        <form className="card stack" action={createStaffUserAction}>
-          <h2>Create staff account</h2>
-          <p className="muted">Staff sign into this admin. They are not Odoo portal customers.</p>
-          <div className="grid">
-            <label className="field">Name<input name="name" required /></label>
-            <label className="field">Email<input name="email" type="email" required /></label>
-            <label className="field">Temporary password<input name="password" type="password" minLength={8} required /></label>
-          </div>
-          <label className="field">
-            Role
-            <select name="roleId" required>
-              <option value="">Select role</option>
-              {roles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
-          <button className="btn">Create staff</button>
-        </form>
+        <p>
+          <Link className="btn" href={odooBackendUsersUrl()} target="_blank" rel="noreferrer">
+            Manage staff in Odoo
+          </Link>
+        </p>
       )}
 
       {showCustomers && (
@@ -164,18 +136,25 @@ export default async function UsersPage({
 
       {showStaff && (
         <div className="card admin-table-wrap">
-          <h2>Website staff</h2>
-          {staff.length === 0 ? (
-            <AdminEmpty title="No staff match these filters." />
+          <h2>Odoo staff</h2>
+          {staffError ? (
+            <p className="error">{staffError}</p>
+          ) : staff.length === 0 ? (
+            <AdminEmpty title="No internal Odoo users match these filters." />
           ) : (
             <table className="table">
-              <thead><tr><th>User</th><th>Roles</th><th>Status</th></tr></thead>
+              <thead><tr><th>User</th><th>Groups</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {staff.map((user) => (
                   <tr key={user.id}>
                     <td><b>{user.name}</b><br /><span className="muted">{user.email}</span></td>
-                    <td>{user.roles.map(({ role: item }) => item.name).join(", ") || "—"}</td>
-                    <td><StatusBadge value={user.status} /></td>
+                    <td>{user.groups.join(", ") || "Internal User"}</td>
+                    <td><StatusBadge value={user.active ? "ACTIVE" : "INACTIVE"} /></td>
+                    <td>
+                      <Link className="btn secondary" href={odooBackendUserUrl(Number(user.id))} target="_blank" rel="noreferrer">
+                        Open in Odoo
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

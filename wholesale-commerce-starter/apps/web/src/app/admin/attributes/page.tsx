@@ -2,7 +2,7 @@ import { addOdooAttributeValueFormAction, createOdooAttributeFormAction } from "
 import { requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader } from "../../../components/admin/admin-ui";
-import { listOdooAdminAttributes, odooBackendAttributeUrl, staffCredentialsConfigured } from "../../../lib/odoo/admin-taxonomy";
+import { listOdooAdminAttributes, odooBackendAttributeUrl } from "../../../lib/odoo/admin-taxonomy";
 
 export default async function AttributesPage({
   searchParams,
@@ -13,15 +13,6 @@ export default async function AttributesPage({
   const params = await searchParams;
   const q = queryValue(params.q).toLowerCase();
   const error = queryValue(params.error);
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Attributes" />
-        <p className="error">Odoo staff credentials are not configured. Attributes are read from Odoo only.</p>
-      </div>
-    );
-  }
 
   let attributes;
   try {

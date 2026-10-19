@@ -12,8 +12,6 @@ import {
   rewriteAdminProductImage,
 } from "../../../../../lib/odoo/admin-products";
 import { parseOdooRecordId } from "../../../../../lib/odoo/catalog";
-import { staffCredentialsConfigured } from "../../../../../lib/odoo/staff";
-
 export default async function AdminProductEditPage({
   params,
 }: {
@@ -23,15 +21,6 @@ export default async function AdminProductEditPage({
   const { id } = await params;
   const productId = parseOdooRecordId(id);
   if (!productId) notFound();
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Product" actions={<Link className="btn secondary" href="/admin/products">Back to products</Link>} />
-        <p className="error">Odoo staff credentials are not configured. Product cost and prices are read from Odoo only.</p>
-      </div>
-    );
-  }
 
   let product;
   try {

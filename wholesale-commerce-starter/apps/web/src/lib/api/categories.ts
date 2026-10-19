@@ -8,11 +8,11 @@ import {
 } from "../odoo/catalog";
 
 export async function fetchStorefrontCategoryCards(): Promise<StorefrontCategoryCard[]> {
-  const [categories, products] = await Promise.all([
+  const [categories, listed] = await Promise.all([
     listOdooCategories(),
     listOdooProducts(),
   ]);
-  return applyFirstProductCategoryImages(categories, products);
+  return applyFirstProductCategoryImages(categories, listed.items);
 }
 
 export async function fetchStorefrontCategory(slug: string): Promise<CategoryDetail | null> {

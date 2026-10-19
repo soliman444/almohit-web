@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { MoneyAmount } from "@almohit/contracts";
 import type { StorefrontCategoryCard, StorefrontProduct } from "../storefront-types";
 import { ApiClientError } from "../api/client";
@@ -12,6 +13,39 @@ export type OdooCatalogQuery = {
   category?: string;
   brand?: string;
   includeDescendants?: boolean;
+};
+
+export type OdooProductSort =
+  | "name_asc"
+  | "name_desc"
+  | "newest"
+  | "oldest";
+
+export type OdooProductListParams = {
+    page?: number;
+    pageSize?: number;
+    q?: string;
+    categoryId?: number;
+    includeChildren?: boolean;
+    brandId?: number;
+    inStock?: boolean;
+    minMoq?: number;
+    maxMoq?: number;
+    sort?: OdooProductSort;
+  };
+
+export type StorefrontProductPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
+export type StorefrontProductList = {
+  items: StorefrontProduct[];
+  pagination: StorefrontProductPagination;
 };
 
 type OdooNamedRef = {
@@ -67,6 +101,25 @@ export type OdooCatalogCategory = {
   parent_id?: number | null;
 };
 
+export type OdooCatalogBrand = {
+  id: number;
+  name: string;
+};
+
+type OdooCatalogPagination = {
+  page?: number;
+  page_size?: number;
+  total?: number;
+  pages?: number;
+  has_next?: boolean;
+  has_previous?: boolean;
+};
+
+type OdooCatalogProductList = {
+  items?: OdooCatalogProduct[];
+  pagination?: OdooCatalogPagination;
+};
+
 export function parseOdooRecordId(value: string | null | undefined): number | null {
   if (!value) return null;
   if (!/^\d+$/.test(value)) return null;
@@ -91,13 +144,86 @@ export function mapOdooPrice(payload: object, currency?: string | null): MoneyAm
   };
 }
 
-export async function listOdooProducts(cookies?: OdooCookieAdapter): Promise<StorefrontProduct[]> {
-  const payload = await odooRequest<OdooCatalogProduct[]>("/products", {
+export function buildOdooProductQuery(params: OdooProductListParams = {}): string {
+  const search = new URLSearchParams();
+
+  const page = asPositiveInt(params.page);
+  if (page && page > 1) {
+    search.set("page", String(page));
+  }
+
+  const pageSize = asPositiveInt(params.pageSize);
+  if (pageSize && pageSize !== 20) {
+    search.set("page_size", String(Math.min(pageSize, 100)));
+  }
+
+  const q = params.q?.trim();
+  if (q) {
+    search.set("q", q);
+  }
+
+  const categoryId = asPositiveInt(params.categoryId);
+  if (categoryId) {
+    search.set("category_id", String(categoryId));
+
+    if (params.includeChildren === true) {
+      search.set("include_children", "true");
+    }
+  }
+
+  const brandId = asPositiveInt(params.brandId);
+  if (brandId) {
+    search.set("brand_id", String(brandId));
+  }
+
+  if (params.inStock === true) {
+    search.set("in_stock", "true");
+  }
+
+  const minMoq = asNonNegativeNumber(params.minMoq);
+  if (minMoq !== null) {
+    search.set("min_moq", String(minMoq));
+  }
+
+  const maxMoq = asNonNegativeNumber(params.maxMoq);
+  if (maxMoq !== null) {
+    search.set("max_moq", String(maxMoq));
+  }
+
+  if (
+    params.sort === "name_asc" ||
+    params.sort === "name_desc" ||
+    params.sort === "newest" ||
+    params.sort === "oldest"
+  ) {
+    search.set("sort", params.sort);
+  }
+
+  return search.toString();
+}
+
+const listOdooProductsByQuery = cache(async (
+  queryString: string,
+  cookies?: OdooCookieAdapter,
+): Promise<StorefrontProductList> => {
+  const path = queryString ? `/products?${queryString}` : "/products";
+  const payload = await odooRequest<OdooCatalogProductList>(path, {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
-  return (payload ?? []).map(mapOdooProduct);
+  const items = (payload?.items ?? []).map(mapOdooProduct);
+  return {
+    items,
+    pagination: mapOdooProductPagination(payload?.pagination, items.length),
+  };
+});
+
+export async function listOdooProducts(
+  params: OdooProductListParams = {},
+  cookies?: OdooCookieAdapter,
+): Promise<StorefrontProductList> {
+  return listOdooProductsByQuery(buildOdooProductQuery(params), cookies);
 }
 
 export async function getOdooProduct(id: number, cookies?: OdooCookieAdapter): Promise<StorefrontProduct | null> {
@@ -116,14 +242,29 @@ export async function getOdooProduct(id: number, cookies?: OdooCookieAdapter): P
   }
 }
 
-export async function listOdooCategories(cookies?: OdooCookieAdapter): Promise<StorefrontCategoryCard[]> {
+export const listOdooCategories = cache(async (cookies?: OdooCookieAdapter): Promise<StorefrontCategoryCard[]> => {
   const payload = await odooRequest<OdooCatalogCategory[]>("/categories", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
   return (payload ?? []).map(mapOdooCategory);
-}
+});
+export const listOdooBrands = cache(async (
+  cookies?: OdooCookieAdapter,
+): Promise<Array<{ id: string; slug: string; name: string }>> => {
+  const payload = await odooRequest<OdooCatalogBrand[]>("/brands", {
+    method: "GET",
+    cookies,
+    captureSetCookie: false,
+  });
+
+  return (payload ?? []).map((brand) => ({
+    id: String(brand.id),
+    slug: String(brand.id),
+    name: brand.name,
+  }));
+});
 
 export function filterOdooProducts(
   products: StorefrontProduct[],
@@ -296,6 +437,45 @@ function mapOdooVariants(payload: OdooCatalogProduct): {
 
 function asAvailableQty(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function asPositiveInt(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function asNonNegativeNumber(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const n = typeof value === "number" ? value : Number(value);
+
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function mapOdooProductPagination(
+  payload: OdooCatalogPagination | null | undefined,
+  itemCount: number,
+): StorefrontProductPagination {
+  const page = asPositiveInt(payload?.page) ?? 1;
+  const pageSize = Math.min(asPositiveInt(payload?.page_size) ?? 20, 100);
+  const total = typeof payload?.total === "number" && Number.isFinite(payload.total) && payload.total >= 0
+    ? payload.total
+    : itemCount;
+  const pages = typeof payload?.pages === "number" && Number.isFinite(payload.pages) && payload.pages >= 0
+    ? payload.pages
+    : pageSize > 0
+      ? Math.ceil(total / pageSize)
+      : 0;
+  return {
+    page,
+    pageSize,
+    total,
+    pages,
+    hasNext: typeof payload?.has_next === "boolean" ? payload.has_next : page < pages,
+    hasPrevious: typeof payload?.has_previous === "boolean" ? payload.has_previous : page > 1,
+  };
 }
 
 function attributeKey(name: string) {

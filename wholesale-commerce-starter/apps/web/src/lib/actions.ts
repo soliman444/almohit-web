@@ -1,17 +1,14 @@
 "use server";
 
-import argon2 from "argon2";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Prisma } from "@almohit/database";
 import { z } from "zod";
 import { ApiClientError, ApiUnavailableError } from "./api/client";
-import { createSession, destroySession, isStaffUser, requirePermission } from "./auth";
+import { destroySession, requirePermission } from "./auth";
 import { isOdooAuthError, loginCustomer, logoutCurrentCustomer, registerCustomer } from "./odoo/auth";
 import { parseOdooRecordId } from "./odoo/catalog";
-import { submitTradeApplication } from "./odoo/trade";
+import { getTradeApplication, submitTradeApplication } from "./odoo/trade";
 import { parseAppRole, parseTradeKyc, tradeApplicationFromKyc, formValue as value } from "./trade-kyc";
-import { prisma } from "./db/prisma";
 
 export async function registerAction(formData: FormData) {
   const account = z.object({
@@ -58,7 +55,6 @@ export async function registerAction(formData: FormData) {
       shopImageContentType: shopImage.imageContentType,
     });
   } catch (error) {
-    await destroySession();
     if (isOdooAuthError(error, "APPLICATION_ALREADY_PENDING")) redirect("/account/business");
     if (isOdooAuthError(error, "INVALID_IMAGE")) redirect("/account/business?error=image");
     if (isOdooAuthError(error, "INVALID_PAYMENT_METHOD")) redirect("/account/business?error=payment");
@@ -77,98 +73,73 @@ export async function loginAction(formData: FormData) {
   if (!email || !password) redirect("/login?error=invalid");
 
   try {
-    await loginCustomer({ email, password });
+    const session = await loginCustomer({ email, password });
+    if (session.isStaff) redirect("/admin");
   } catch (error) {
     if (isOdooAuthError(error, "INVALID_CREDENTIALS") || (error instanceof ApiClientError && error.status === 401)) {
-      const prismaLogin = await loginWithPrisma(email, password);
-      if (prismaLogin === "staff") redirect("/admin");
-      if (prismaLogin === "user") redirect("/account");
       redirect("/login?error=invalid");
     }
-    if (error instanceof ApiUnavailableError) {
-      const prismaLogin = await loginWithPrisma(email, password);
-      if (prismaLogin === "staff") redirect("/admin");
-      if (prismaLogin === "user") redirect("/account");
-      redirect("/login?error=unavailable");
-    }
+    if (error instanceof ApiUnavailableError) redirect("/login?error=unavailable");
     throw error;
   }
 
-  await destroySession();
   redirect("/account");
 }
 
 export async function logoutAction() {
   await logoutCurrentCustomer();
-  await destroySession();
   redirect("/");
-}
-
-async function loginWithPrisma(email: string, password: string): Promise<"staff" | "user" | false> {
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      roles: {
-        include: {
-          role: {
-            include: {
-              permissions: { include: { permission: true } },
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!user || user.deletedAt || user.status !== "ACTIVE") return false;
-  if (!(await argon2.verify(user.passwordHash, password))) return false;
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  await createSession(user.id);
-  if (isStaffUser(user)) {
-    await logoutCurrentCustomer();
-    return "staff";
-  }
-  return "user";
 }
 
 export async function submitBusinessRequestAction(formData: FormData) {
   const odoo = await import("./odoo/auth");
   const odooSession = await odoo.hasOdooSession();
   const sessionCustomer = odooSession ? await odoo.getCurrentCustomer() : null;
-  const role = parseAppRole(sessionCustomer?.role ?? "merchant");
+  if (!odooSession || !sessionCustomer) redirect("/login");
+
+  const existing = await getTradeApplication();
+  if (
+    sessionCustomer.tradeStatus === "approved"
+    || sessionCustomer.tradeStatus === "pending"
+    || existing?.status === "approved"
+    || existing?.status === "pending"
+  ) {
+    redirect("/account/business");
+  }
+
+  const role = parseAppRole(sessionCustomer.role ?? "merchant");
   const kyc = parseTradeKyc(formData, role);
   if (!kyc.success) redirect("/account/business?error=kyc");
 
-  if (odooSession) {
-    try {
-      const image = formData.get("shopImage");
-      const { decodeAdminImage } = await import("./odoo/admin-products");
-      const shopImage = role === "merchant"
-        ? await decodeAdminImage(image instanceof File ? image : null)
-        : { imageBase64: undefined, imageContentType: undefined };
-      await submitTradeApplication({
-        ...tradeApplicationFromKyc(role, kyc.data),
-        shopImageBase64: shopImage.imageBase64,
-        shopImageContentType: shopImage.imageContentType,
-      });
-    } catch (error) {
-      if (isOdooAuthError(error, "APPLICATION_ALREADY_PENDING")) redirect("/account/business?status=pending");
-      if (isOdooAuthError(error, "INVALID_IMAGE")) redirect("/account/business?error=image");
-      if (isOdooAuthError(error, "INVALID_PAYMENT_METHOD")) redirect("/account/business?error=payment");
-      if (isOdooAuthError(error, "INVALID_ROLE")) redirect("/account/business?error=role");
-      if (isOdooAuthError(error, "UNAUTHENTICATED") || (error instanceof ApiClientError && error.status === 401)) {
-        redirect("/login");
-      }
-      if (error instanceof ApiUnavailableError) redirect("/account/business?error=unavailable");
-      throw error;
+  try {
+    const image = formData.get("shopImage");
+    const { decodeAdminImage } = await import("./odoo/admin-products");
+    const shopImage = role === "merchant"
+      ? await decodeAdminImage(image instanceof File ? image : null)
+      : { imageBase64: undefined, imageContentType: undefined };
+    await submitTradeApplication({
+      ...tradeApplicationFromKyc(role, kyc.data),
+      shopImageBase64: shopImage.imageBase64,
+      shopImageContentType: shopImage.imageContentType,
+    });
+  } catch (error) {
+    if (isOdooAuthError(error, "APPLICATION_ALREADY_PENDING") || isOdooAuthError(error, "APPLICATION_ALREADY_APPROVED")) {
+      redirect("/account/business");
     }
-    redirect("/account/business?status=submitted");
+    if (isOdooAuthError(error, "INVALID_IMAGE")) redirect("/account/business?error=image");
+    if (isOdooAuthError(error, "INVALID_PAYMENT_METHOD")) redirect("/account/business?error=payment");
+    if (isOdooAuthError(error, "INVALID_ROLE")) redirect("/account/business?error=role");
+    if (isOdooAuthError(error, "UNAUTHENTICATED") || (error instanceof ApiClientError && error.status === 401)) {
+      redirect("/login");
+    }
+    if (error instanceof ApiUnavailableError) redirect("/account/business?error=unavailable");
+    throw error;
   }
-
-  redirect("/login");
+  redirect("/account/business?status=submitted");
 }
 
 export async function approveBusinessRequestAction(formData: FormData) {
-  const admin = await requirePermission("customer.approve");
+  await requirePermission("customer.approve");
   const requestId = value(formData, "requestId");
   if (!requestId) return;
   const { approveOdooAdminTradeApplication } = await import("./odoo/admin-trade");
@@ -181,20 +152,12 @@ export async function approveBusinessRequestAction(formData: FormData) {
     }
     throw error;
   }
-  await prisma.auditLog.create({
-    data: {
-      userId: admin.id,
-      action: "BUSINESS_REQUEST_APPROVED",
-      entityType: "TradeApplication",
-      entityId: requestId,
-    },
-  });
   revalidatePath("/admin/business-requests");
   revalidatePath("/admin");
 }
 
 export async function rejectBusinessRequestAction(formData: FormData) {
-  const admin = await requirePermission("customer.reject");
+  await requirePermission("customer.reject");
   const requestId = value(formData, "requestId");
   const reason = value(formData, "reason");
   if (!requestId) return;
@@ -208,47 +171,8 @@ export async function rejectBusinessRequestAction(formData: FormData) {
     }
     throw error;
   }
-  await prisma.auditLog.create({
-    data: {
-      userId: admin.id,
-      action: "BUSINESS_REQUEST_REJECTED",
-      entityType: "TradeApplication",
-      entityId: requestId,
-      newData: reason ? { reason } : undefined,
-    },
-  });
   revalidatePath("/admin/business-requests");
   revalidatePath("/admin");
-}
-
-export async function createRoleAction(formData: FormData) {
-  const admin = await requirePermission("role.create");
-  const name = value(formData, "name");
-  const slug = value(formData, "slug").toLowerCase().replace(/[^a-z0-9-]+/g, "-");
-  const permissionIds = formData.getAll("permissions").map(String);
-  if (!name || !slug) return;
-
-  const role = await prisma.role.create({ data: { name, slug } });
-  if (permissionIds.length) {
-    await prisma.rolePermission.createMany({ data: permissionIds.map((permissionId) => ({ roleId: role.id, permissionId })) });
-  }
-  await prisma.auditLog.create({ data: { userId: admin.id, action: "ROLE_CREATED", entityType: "Role", entityId: role.id } });
-  revalidatePath("/admin/roles");
-}
-
-export async function createStaffUserAction(formData: FormData) {
-  const admin = await requirePermission("user.create");
-  const name = value(formData, "name");
-  const email = value(formData, "email").toLowerCase();
-  const password = value(formData, "password");
-  const roleId = value(formData, "roleId");
-  if (!name || !email || password.length < 8 || !roleId) return;
-
-  const passwordHash = await argon2.hash(password);
-  const staff = await prisma.user.create({ data: { name, email, passwordHash } });
-  await prisma.userRole.create({ data: { userId: staff.id, roleId } });
-  await prisma.auditLog.create({ data: { userId: admin.id, action: "STAFF_USER_CREATED", entityType: "User", entityId: staff.id } });
-  revalidatePath("/admin/users");
 }
 
 function revalidateCatalog() {
@@ -287,26 +211,6 @@ export async function createOdooAttributeFormAction(formData: FormData) {
 
 export async function addOdooAttributeValueFormAction(formData: FormData) {
   redirectOdooAdminForm(await addOdooAttributeValueAction(formData), "/admin/attributes", "/admin/attributes");
-}
-
-async function writeAudit(
-  userId: string,
-  action: string,
-  entityType: string,
-  entityId: string,
-  oldData?: Record<string, unknown>,
-  newData?: Record<string, unknown>,
-) {
-  await prisma.auditLog.create({
-    data: {
-      userId,
-      action,
-      entityType,
-      entityId,
-      oldData: oldData ? (oldData as Prisma.InputJsonValue) : undefined,
-      newData: newData ? (newData as Prisma.InputJsonValue) : undefined,
-    },
-  });
 }
 
 function odooAdminCreateErrorPath(error: unknown) {
@@ -348,7 +252,7 @@ export async function createOdooCategoryAction(formData: FormData): Promise<Odoo
   name: string;
   depth: number;
 }>> {
-  const admin = await requirePermission("category.create");
+  await requirePermission("category.create");
   const name = value(formData, "name");
   if (!name) return { ok: false, error: "Category name is required." };
   const parentRaw = value(formData, "parentId");
@@ -357,12 +261,6 @@ export async function createOdooCategoryAction(formData: FormData): Promise<Odoo
   try {
     const { createOdooAdminCategory } = await import("./odoo/admin-products");
     const created = await createOdooAdminCategory({ name, parentId: parentId ?? undefined });
-    await writeAudit(admin.id, "ADMIN_CATEGORY_CREATED", "product.category", String(created.id), undefined, {
-      name: created.name,
-      parent: created.parent,
-      websiteStaffId: admin.id,
-      odooWriter: "server-staff-service-account",
-    });
     revalidateCatalog();
     return {
       ok: true,
@@ -381,7 +279,7 @@ export async function createOdooBrandAction(formData: FormData): Promise<OdooAdm
   id: string;
   name: string;
 }>> {
-  const admin = await requirePermission("brand.create");
+  await requirePermission("brand.create");
   const name = value(formData, "name");
   if (!name) return { ok: false, error: "Brand name is required." };
   const image = formData.get("image");
@@ -389,11 +287,6 @@ export async function createOdooBrandAction(formData: FormData): Promise<OdooAdm
     const { createOdooAdminBrand, decodeAdminImage } = await import("./odoo/admin-products");
     const imagePayload = await decodeAdminImage(image instanceof File ? image : null);
     const created = await createOdooAdminBrand({ name, ...imagePayload });
-    await writeAudit(admin.id, "ADMIN_BRAND_CREATED", "almohit.product.brand", String(created.id), undefined, {
-      name: created.name,
-      websiteStaffId: admin.id,
-      odooWriter: "server-staff-service-account",
-    });
     revalidateCatalog();
     return { ok: true, data: { id: String(created.id), name: created.name } };
   } catch (error) {
@@ -406,7 +299,7 @@ export async function createOdooAttributeAction(formData: FormData): Promise<Odo
   name: string;
   values: Array<{ id: number; name: string }>;
 }>> {
-  const admin = await requirePermission("product.create");
+  await requirePermission("product.create");
   const name = value(formData, "name");
   const values = value(formData, "values")
     .split(/[\n,]/)
@@ -417,12 +310,6 @@ export async function createOdooAttributeAction(formData: FormData): Promise<Odo
   try {
     const { createOdooAdminAttribute } = await import("./odoo/admin-products");
     const created = await createOdooAdminAttribute({ name, values });
-    await writeAudit(admin.id, "ADMIN_ATTRIBUTE_CREATED", "product.attribute", String(created.id), undefined, {
-      name: created.name,
-      values: created.values,
-      websiteStaffId: admin.id,
-      odooWriter: "server-staff-service-account",
-    });
     revalidateCatalog();
     return { ok: true, data: created };
   } catch (error) {
@@ -435,7 +322,7 @@ export async function addOdooAttributeValueAction(formData: FormData): Promise<O
   name: string;
   values: Array<{ id: number; name: string }>;
 }>> {
-  const admin = await requirePermission("product.create");
+  await requirePermission("product.create");
   const attributeId = parseOdooRecordId(value(formData, "attributeId"));
   const values = value(formData, "values")
     .split(/[\n,]/)
@@ -446,12 +333,6 @@ export async function addOdooAttributeValueAction(formData: FormData): Promise<O
   try {
     const { addOdooAdminAttributeValues } = await import("./odoo/admin-products");
     const created = await addOdooAdminAttributeValues(attributeId, values);
-    await writeAudit(admin.id, "ADMIN_ATTRIBUTE_CREATED", "product.attribute.value", String(created.id), undefined, {
-      attributeId,
-      values,
-      websiteStaffId: admin.id,
-      odooWriter: "server-staff-service-account",
-    });
     revalidateCatalog();
     return { ok: true, data: created };
   } catch (error) {
@@ -460,7 +341,7 @@ export async function addOdooAttributeValueAction(formData: FormData): Promise<O
 }
 
 export async function createProductAction(formData: FormData) {
-  const admin = await requirePermission("product.create");
+  await requirePermission("product.create");
   const isVariable = value(formData, "productType") === "VARIABLE";
 
   const categoryId = parseOdooRecordId(value(formData, "categoryId"));
@@ -549,15 +430,6 @@ export async function createProductAction(formData: FormData) {
   } catch (error) {
     redirect(odooAdminCreateErrorPath(error));
   }
-  await writeAudit(admin.id, "ADMIN_PRODUCT_CREATED", "product.template", String(created.id), undefined, {
-    name: created.name,
-    sku: created.sku,
-    variantId: created.variant_id,
-    variantCount: created.variant_count,
-    productType: created.product_type,
-    websiteStaffId: admin.id,
-    odooWriter: "server-staff-service-account",
-  });
   revalidateCatalog();
   redirect(`/admin/products?created=${created.id}`);
 }

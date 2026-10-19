@@ -20,12 +20,6 @@ export function ProductCard({
 }) {
   const image = primaryImage(product);
   const next = secondaryImage(product);
-  console.log('[card]', product.slug, {
-    totalMedia: product.media?.length,
-    galleryCount: galleryImages(product).length,
-    hasNext: !!next,
-    mediaTypes: product.media?.map((m) => m.media.fileType),
-  });
 
   const promo = promoForProduct(product.slug);
   const field = fieldFor(index);

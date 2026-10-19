@@ -2,7 +2,7 @@ import { createOdooBrandFormAction } from "../../../lib/actions";
 import { hasPermission, requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader, StatusBadge } from "../../../components/admin/admin-ui";
-import { listOdooAdminBrands, odooBackendBrandUrl, staffCredentialsConfigured } from "../../../lib/odoo/admin-taxonomy";
+import { listOdooAdminBrands, odooBackendBrandUrl } from "../../../lib/odoo/admin-taxonomy";
 
 export default async function AdminBrandsPage({
   searchParams,
@@ -15,15 +15,6 @@ export default async function AdminBrandsPage({
   const status = queryValue(params.status);
   const error = queryValue(params.error);
   const canCreate = hasPermission(admin, "brand.create");
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Brands" />
-        <p className="error">Odoo staff credentials are not configured. Brands are read from Odoo only.</p>
-      </div>
-    );
-  }
 
   let brands;
   try {

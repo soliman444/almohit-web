@@ -1,23 +1,68 @@
+import type { OdooProductSort } from "./odoo/catalog";
 import type { StorefrontProduct } from "./storefront-types";
 
 export type FinderQuery = {
   category?: string;
   brand?: string;
   price?: string;
-  moq?: string;
+  min_moq?: string;
+  max_moq?: string;
   availability?: string;
   view?: string;
   q?: string;
+  page?: string;
+  sort?: string;
 };
 
+const CATALOG_QUERY_KEYS = [
+  "q",
+  "category",
+  "brand",
+  "price",
+  "min_moq",
+  "max_moq",
+  "availability",
+  "view",
+  "sort",
+  "page",
+] as const;
+
+export function parseCatalogPage(value?: string): number {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+export function parseCatalogSort(value?: string): OdooProductSort | undefined {
+  return value === "name_asc" ||
+    value === "name_desc" ||
+    value === "newest" ||
+    value === "oldest"
+    ? value
+    : undefined;
+}
+
+export function storefrontCatalogHref(
+  pathname: string,
+  query: FinderQuery,
+  overrides: Partial<FinderQuery> = {},
+): string {
+  const params = new URLSearchParams();
+  const merged: FinderQuery = { ...query, ...overrides };
+  for (const key of CATALOG_QUERY_KEYS) {
+    const raw = merged[key]?.trim();
+    if (!raw) continue;
+    if (key === "page" && parseCatalogPage(raw) <= 1) continue;
+    if (key === "sort" && !parseCatalogSort(raw)) continue;
+    params.set(key, raw);
+  }
+  const search = params.toString();
+  return search ? `${pathname}?${search}` : pathname;
+}
+
 export function applyFinderFilters(products: StorefrontProduct[], query: FinderQuery) {
+  const hasNew = products.some((product) => product.isNew);
   return products.filter((product) => {
-    if (query.view === "new" && !product.isNew) return false;
-    if (query.category && product.category.slug !== query.category) return false;
-    if (query.brand && product.brand?.slug !== query.brand) return false;
-    if (query.availability === "in-stock" && !product.inStock) return false;
-    if (query.moq === "5" && product.minOrderQuantity > 5) return false;
-    if (query.moq === "10" && product.minOrderQuantity > 10) return false;
+    if (query.view === "new" && hasNew && !product.isNew) return false;
     if (query.price && product.price) {
       const amount = Number(product.price.amount);
       if (!Number.isFinite(amount)) return true;

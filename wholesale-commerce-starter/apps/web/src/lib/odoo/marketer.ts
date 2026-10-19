@@ -1,6 +1,6 @@
 import { odooRequest } from "./client";
 import { mapTradeApplication, type OdooTradeApplicationPayload, type TradeApplication } from "./trade";
-import type { OdooCookieAdapter } from "./types";
+import type { OdooCookieAdapter, OdooPaginatedList } from "./types";
 
 export type CreateMarketerMerchantInput = {
   name: string;
@@ -43,12 +43,12 @@ export function marketerMerchantBody(input: CreateMarketerMerchantInput) {
 }
 
 export async function listMarketerMerchants(cookies?: OdooCookieAdapter): Promise<TradeApplication[]> {
-  const payload = await odooRequest<OdooTradeApplicationPayload[]>("/marketer/merchants", {
+  const payload = await odooRequest<OdooPaginatedList<OdooTradeApplicationPayload>>("/marketer/merchants", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
-  return (payload ?? []).map(mapTradeApplication);
+  return (payload?.items ?? []).map(mapTradeApplication);
 }
 
 export async function createMarketerMerchant(

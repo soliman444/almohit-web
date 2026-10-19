@@ -1,7 +1,7 @@
 import { ApiClientError } from "../api/client";
 import { getOdooApiUrl } from "./config";
 import { rewriteOdooImageUrl } from "./images";
-import { odooStaffRequest, staffCredentialsConfigured } from "./staff";
+import { odooStaffRequest } from "./staff";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
@@ -250,14 +250,7 @@ export function rewriteAdminProductImage(url: string | null | undefined) {
   return rewriteOdooImageUrl(url);
 }
 
-function requireStaffConfig() {
-  if (!staffCredentialsConfigured()) {
-    throw new ApiClientError(503, "STAFF_REQUIRED", "Odoo staff credentials are not configured.");
-  }
-}
-
 export async function listOdooAdminProductOptions(): Promise<OdooAdminProductOptions> {
-  requireStaffConfig();
   const options = await odooStaffRequest<OdooAdminProductOptions>("/admin/product-options", { method: "GET" });
   return {
     categories: options.categories ?? [],
@@ -267,7 +260,6 @@ export async function listOdooAdminProductOptions(): Promise<OdooAdminProductOpt
 }
 
 export async function listOdooAdminProducts(query: AdminProductListQuery = {}): Promise<OdooAdminProductListItem[]> {
-  requireStaffConfig();
   const params = new URLSearchParams();
   if (query.q) params.set("q", query.q);
   if (query.categoryId) params.set("category_id", query.categoryId);
@@ -296,12 +288,10 @@ export async function withVariableWholesalePrices<T extends OdooAdminProductList
 }
 
 export async function getOdooAdminProduct(productId: number): Promise<OdooAdminProductDetail> {
-  requireStaffConfig();
   return odooStaffRequest<OdooAdminProductDetail>(`/admin/products/${productId}`, { method: "GET" });
 }
 
 export async function createOdooAdminProduct(input: CreateOdooAdminProductInput): Promise<OdooCreatedProduct> {
-  requireStaffConfig();
   const body = odooCreateProductPayload(input);
   return odooStaffRequest<OdooCreatedProduct>("/admin/products", {
     method: "POST",
@@ -310,7 +300,6 @@ export async function createOdooAdminProduct(input: CreateOdooAdminProductInput)
 }
 
 export async function createOdooAdminCategory(input: { name: string; parentId?: number }): Promise<OdooCreatedCategory> {
-  requireStaffConfig();
   return odooStaffRequest<OdooCreatedCategory>("/admin/categories", {
     method: "POST",
     body: { name: input.name, parent_id: input.parentId },
@@ -322,7 +311,6 @@ export async function createOdooAdminBrand(input: {
   imageBase64?: string;
   imageContentType?: string;
 }): Promise<OdooCreatedBrand> {
-  requireStaffConfig();
   return odooStaffRequest<OdooCreatedBrand>("/admin/brands", {
     method: "POST",
     body: {
@@ -334,7 +322,6 @@ export async function createOdooAdminBrand(input: {
 }
 
 export async function createOdooAdminAttribute(input: { name: string; values: string[] }): Promise<OdooCreatedAttribute> {
-  requireStaffConfig();
   return odooStaffRequest<OdooCreatedAttribute>("/admin/attributes", {
     method: "POST",
     body: { name: input.name, values: input.values },
@@ -342,7 +329,6 @@ export async function createOdooAdminAttribute(input: { name: string; values: st
 }
 
 export async function addOdooAdminAttributeValues(attributeId: number, values: string[]): Promise<OdooCreatedAttribute> {
-  requireStaffConfig();
   return odooStaffRequest<OdooCreatedAttribute>(`/admin/attributes/${attributeId}/values`, {
     method: "POST",
     body: { values },

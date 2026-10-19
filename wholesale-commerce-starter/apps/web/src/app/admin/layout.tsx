@@ -1,11 +1,9 @@
-import { permissionSet, requireUser } from "../../lib/auth";
+import { isStaffUser, requireUser } from "../../lib/auth";
 import { AdminNav } from "../../components/admin/admin-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const isSuperAdmin = user.roles.some(({ role }) => role.slug === "super-admin");
-  const hasAdminPermissions = permissionSet(user).size > 0;
-  if (!isSuperAdmin && !hasAdminPermissions) {
+  if (!isStaffUser(user)) {
     return (
       <div className="admin-shell">
         <div className="admin-main">

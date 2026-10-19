@@ -16,7 +16,6 @@ import {
   rewriteAdminProductImage,
   withVariableWholesalePrices,
 } from "../../../lib/odoo/admin-products";
-import { staffCredentialsConfigured } from "../../../lib/odoo/staff";
 import { FiShoppingBag } from "react-icons/fi";
 
 const STATUSES = ["ACTIVE", "INACTIVE", "ARCHIVED"] as const;
@@ -36,15 +35,6 @@ export default async function AdminProductsPage({
   const type = queryValue(params.type);
   const canCreate = hasPermission(admin, "product.create");
   const canUpdate = hasPermission(admin, "product.update");
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Products" actions={canCreate ? <Link className="btn" href="/admin/products/new">New product</Link> : null} />
-        <p className="error">Odoo staff credentials are not configured. The admin catalog reads Odoo only.</p>
-      </div>
-    );
-  }
 
   let products;
   let categories;

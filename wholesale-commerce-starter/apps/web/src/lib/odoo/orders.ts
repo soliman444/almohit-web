@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { OrderDetailDto, OrderSummaryDto } from "@almohit/contracts";
 import { ApiClientError } from "../api/client";
 import { formatOdooAmount, type OdooCartCurrency, type OdooCartLinePayload } from "./cart";
@@ -62,7 +63,59 @@ export type StorefrontOrderDetail = OrderDetailDto & {
   billing: OrderDetailDto["shipping"] | null;
 };
 
+export type OdooOrderState = "sale" | "done" | "sent";
+export type OdooOrderSort = "newest" | "oldest";
+
+export type OdooOrderListParams = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  state?: OdooOrderState;
+  dateFrom?: string;
+  dateTo?: string;
+  sort?: OdooOrderSort;
+};
+
+export type StorefrontOrderPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
+export type StorefrontOrderList = {
+  items: OrderSummaryDto[];
+  pagination: StorefrontOrderPagination;
+};
+
+export type OrdersQuery = {
+  q?: string;
+  state?: string;
+  date_from?: string;
+  date_to?: string;
+  sort?: string;
+  page?: string;
+};
+
+type OdooOrderPaginationPayload = {
+  page?: number;
+  page_size?: number;
+  total?: number;
+  pages?: number;
+  has_next?: boolean;
+  has_previous?: boolean;
+};
+
+type OdooOrderListPayload = {
+  items?: OdooOrderPayload[];
+  pagination?: OdooOrderPaginationPayload;
+};
+
 const UNOAUTH_STATUSES = new Set([401, 403, 302, 303, 307, 308]);
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const ORDER_QUERY_KEYS = ["q", "state", "date_from", "date_to", "sort", "page"] as const;
 
 export function mapOdooOrder(payload: OdooOrderPayload): StorefrontOrderDetail {
   const currency = payload.currency?.name || "USD";
@@ -155,16 +208,86 @@ export function mapOdooOrderSummary(payload: OdooOrderPayload): OrderSummaryDto 
   };
 }
 
-export async function listOdooOrders(cookies?: OdooCookieAdapter): Promise<OrderSummaryDto[]> {
+export function parseOrderPage(value?: string): number {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+export function parseOrderState(value?: string): OdooOrderState | undefined {
+  return value === "sale" || value === "done" || value === "sent" ? value : undefined;
+}
+
+export function parseOrderSort(value?: string): OdooOrderSort | undefined {
+  return value === "newest" || value === "oldest" ? value : undefined;
+}
+
+export function parseOrderDate(value?: string): string | undefined {
+  const text = value?.trim();
+  return text && ISO_DATE.test(text) ? text : undefined;
+}
+
+export function buildOdooOrderQuery(params: OdooOrderListParams = {}): string {
+  const search = new URLSearchParams();
+  const page = Number.isInteger(params.page) && (params.page ?? 0) > 1 ? params.page : null;
+  if (page) search.set("page", String(page));
+  const pageSize = Number.isInteger(params.pageSize) && (params.pageSize ?? 0) > 0
+    ? Math.min(params.pageSize as number, 100)
+    : null;
+  if (pageSize && pageSize !== 20) search.set("page_size", String(pageSize));
+  const q = params.q?.trim();
+  if (q) search.set("q", q);
+  if (params.state === "sale" || params.state === "done" || params.state === "sent") {
+    search.set("state", params.state);
+  }
+  const dateFrom = parseOrderDate(params.dateFrom);
+  if (dateFrom) search.set("date_from", dateFrom);
+  const dateTo = parseOrderDate(params.dateTo);
+  if (dateTo) search.set("date_to", dateTo);
+  if (params.sort === "newest" || params.sort === "oldest") search.set("sort", params.sort);
+  return search.toString();
+}
+
+export function ordersListHref(query: OrdersQuery, overrides: Partial<OrdersQuery> = {}): string {
+  const params = new URLSearchParams();
+  const merged: OrdersQuery = { ...query, ...overrides };
+  for (const key of ORDER_QUERY_KEYS) {
+    const raw = merged[key]?.trim();
+    if (!raw) continue;
+    if (key === "page" && parseOrderPage(raw) <= 1) continue;
+    if (key === "state" && !parseOrderState(raw)) continue;
+    if (key === "sort" && !parseOrderSort(raw)) continue;
+    if ((key === "date_from" || key === "date_to") && !parseOrderDate(raw)) continue;
+    params.set(key, raw);
+  }
+  const search = params.toString();
+  return search ? `/account/orders?${search}` : "/account/orders";
+}
+
+const listOdooOrdersByQuery = cache(async (
+  queryString: string,
+  cookies?: OdooCookieAdapter,
+): Promise<StorefrontOrderList> => {
+  const path = queryString ? `/orders?${queryString}` : "/orders";
+  const payload = await odooRequest<OdooOrderListPayload>(path, {
+    method: "GET",
+    cookies,
+    captureSetCookie: false,
+  });
+  const items = (payload?.items ?? []).map(mapOdooOrderSummary);
+  return {
+    items,
+    pagination: mapOdooOrderPagination(payload?.pagination, items.length),
+  };
+});
+
+export async function listOdooOrders(
+  params: OdooOrderListParams = {},
+  cookies?: OdooCookieAdapter,
+): Promise<StorefrontOrderList> {
   try {
-    const payload = await odooRequest<OdooOrderPayload[]>("/orders", {
-      method: "GET",
-      cookies,
-      captureSetCookie: false,
-    });
-    return (payload ?? []).map(mapOdooOrderSummary);
+    return await listOdooOrdersByQuery(buildOdooOrderQuery(params), cookies);
   } catch (error) {
-    if (isUnauthenticated(error)) return [];
+    if (isUnauthenticated(error)) return emptyOrderList();
     throw error;
   }
 }
@@ -188,4 +311,47 @@ function odooDate(value: string | null | undefined) {
 function isUnauthenticated(error: unknown): boolean {
   if (!(error instanceof ApiClientError)) return false;
   return UNOAUTH_STATUSES.has(error.status) || error.code === "UNAUTHENTICATED";
+}
+
+function emptyOrderList(): StorefrontOrderList {
+  return {
+    items: [],
+    pagination: {
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      pages: 0,
+      hasNext: false,
+      hasPrevious: false,
+    },
+  };
+}
+
+function asPositiveInt(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function mapOdooOrderPagination(
+  payload: OdooOrderPaginationPayload | null | undefined,
+  itemCount: number,
+): StorefrontOrderPagination {
+  const page = asPositiveInt(payload?.page) ?? 1;
+  const pageSize = Math.min(asPositiveInt(payload?.page_size) ?? 20, 100);
+  const total = typeof payload?.total === "number" && Number.isFinite(payload.total) && payload.total >= 0
+    ? payload.total
+    : itemCount;
+  const pages = typeof payload?.pages === "number" && Number.isFinite(payload.pages) && payload.pages >= 0
+    ? payload.pages
+    : pageSize > 0
+      ? Math.ceil(total / pageSize)
+      : 0;
+  return {
+    page,
+    pageSize,
+    total,
+    pages,
+    hasNext: typeof payload?.has_next === "boolean" ? payload.has_next : page < pages,
+    hasPrevious: typeof payload?.has_previous === "boolean" ? payload.has_previous : page > 1,
+  };
 }

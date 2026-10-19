@@ -1,5 +1,5 @@
 import { getOdooApiUrl } from "./config";
-import { odooStaffRequest, staffCredentialsConfigured } from "./staff";
+import { odooStaffRequest } from "./staff";
 import { mapPaymentTerm, type OdooPaymentTermPayload, type PaymentTerm } from "./types";
 
 export type OdooAdminCustomerPayload = {
@@ -79,8 +79,57 @@ export async function countOdooAdminCustomers(): Promise<number> {
   return summary.total;
 }
 
+export type OdooAdminStaff = {
+  id: string;
+  name: string;
+  login: string;
+  email: string;
+  active: boolean;
+  groups: string[];
+};
+
+export async function listOdooAdminStaff(input: { q?: string } = {}): Promise<OdooAdminStaff[]> {
+  const query = new URLSearchParams();
+  if (input.q) query.set("q", input.q);
+  const suffix = query.size ? `?${query.toString()}` : "";
+  const payload = await odooStaffRequest<Array<{
+    id: number;
+    name: string;
+    login: string;
+    email?: string | null;
+    active?: boolean;
+    groups?: string[];
+  }>>(`/admin/staff${suffix}`, { method: "GET" });
+  return payload.map((user) => ({
+    id: String(user.id),
+    name: user.name,
+    login: user.login,
+    email: user.email || user.login,
+    active: user.active !== false,
+    groups: user.groups ?? [],
+  }));
+}
+
+export async function countOdooAdminStaff(): Promise<number> {
+  const summary = await odooStaffRequest<{ total: number }>("/admin/staff/summary", {
+    method: "GET",
+  });
+  return summary.total;
+}
+
+export function odooBackendUserUrl(userId: number) {
+  return `${getOdooApiUrl()}/web#id=${userId}&model=res.users&view_type=form`;
+}
+
+export function odooBackendUsersUrl() {
+  return `${getOdooApiUrl()}/web#action=base.action_res_users&model=res.users`;
+}
+
+export function odooBackendGroupsUrl() {
+  return `${getOdooApiUrl()}/web#action=base.action_res_groups&model=res.groups`;
+}
+
 export function odooBackendPartnerUrl(partnerId: number) {
   return `${getOdooApiUrl()}/web#id=${partnerId}&model=res.partner&view_type=form`;
 }
 
-export { staffCredentialsConfigured };

@@ -60,7 +60,7 @@ export async function loginCustomer(
   return mapCurrentCustomer(payload);
 }
 
-export async function getCurrentCustomer(cookies?: OdooCookieAdapter): Promise<CurrentCustomer | null> {
+export async function getSessionUser(cookies?: OdooCookieAdapter): Promise<CurrentCustomer | null> {
   const adapter = cookies ?? await nextOdooCookies();
   if (!readOdooSessionCookie(adapter)) return null;
 
@@ -75,6 +75,18 @@ export async function getCurrentCustomer(cookies?: OdooCookieAdapter): Promise<C
     if (isUnauthenticated(error)) return null;
     throw error;
   }
+}
+
+export async function getCurrentCustomer(cookies?: OdooCookieAdapter): Promise<CurrentCustomer | null> {
+  const session = await getSessionUser(cookies);
+  if (!session || session.isStaff) return null;
+  return session;
+}
+
+export async function getOdooStaffUser(cookies?: OdooCookieAdapter): Promise<CurrentCustomer | null> {
+  const session = await getSessionUser(cookies);
+  if (!session?.isStaff) return null;
+  return session;
 }
 
 export async function getAuthMe(cookies?: OdooCookieAdapter): Promise<AuthMeResponse> {

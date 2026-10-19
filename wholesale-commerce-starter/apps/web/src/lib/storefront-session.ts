@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser, isStaffUser, requireUser } from "./auth";
-import { isApprovedBuyer } from "./commerce";
+import { getCurrentUser, isStaffUser } from "./auth";
 import { hasOdooSession, getCurrentCustomer as getOdooCustomer, type CurrentCustomer } from "./odoo/auth";
 
 export function accountPageDestination(input: { isPrismaStaff: boolean; hasOdooCustomer: boolean }) {
@@ -11,7 +10,7 @@ export function accountPageDestination(input: { isPrismaStaff: boolean; hasOdooC
 
 export async function redirectIfPrismaStaff() {
   const staff = await getCurrentUser();
-  if (staff && staff.status === "ACTIVE" && isStaffUser(staff)) redirect("/admin");
+  if (staff && isStaffUser(staff)) redirect("/admin");
 }
 
 export async function requireStorefrontApproved() {
@@ -22,18 +21,15 @@ export async function requireStorefrontApproved() {
     if (customer.tradeStatus !== "approved") redirect("/account/business");
     return { kind: "odoo" as const, customer };
   }
-  const user = await requireUser();
-  if (!isApprovedBuyer(user) || !user.customer) redirect("/account/business");
-  return { kind: "legacy" as const, user };
+  redirect("/login");
 }
 
 export type StorefrontApproved =
-  | { kind: "odoo"; customer: CurrentCustomer }
-  | { kind: "legacy"; user: Awaited<ReturnType<typeof requireUser>> };
+  | { kind: "odoo"; customer: CurrentCustomer };
 
 export async function requireMarketer() {
   const session = await requireStorefrontApproved();
-  if (session.kind !== "odoo" || session.customer.role !== "marketer") {
+  if (session.customer.role !== "marketer") {
     redirect("/account");
   }
   return session;
@@ -41,7 +37,7 @@ export async function requireMarketer() {
 
 export async function requireDistributor() {
   const session = await requireStorefrontApproved();
-  if (session.kind !== "odoo" || session.customer.role !== "distributor") {
+  if (session.customer.role !== "distributor") {
     redirect("/account");
   }
   return session;

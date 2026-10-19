@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
-import { getCurrentUser as getPrismaUser, isStaffUser } from "../../lib/auth";
+import { getCurrentUser as getStaffUser, isStaffUser } from "../../lib/auth";
 import { getCurrentUser as getStorefrontUser } from "../../lib/api/auth";
 import { getCurrentCart } from "../../lib/api/cart";
 import { getBusinessStatus } from "../../lib/api/customers";
@@ -11,11 +11,9 @@ import type { CartView } from "../../lib/cart-view";
 import { CartSessionProvider } from "./cart-session";
 import { HeaderBar } from "./header-bar";
 
-const STAFF_SESSION_COOKIE = "wholesale_session";
-
 async function hasStorefrontSessionCookie() {
   const jar = await cookies();
-  return Boolean(jar.get(ODOO_SESSION_COOKIE_NAME)?.value || jar.get(STAFF_SESSION_COOKIE)?.value);
+  return Boolean(jar.get(ODOO_SESSION_COOKIE_NAME)?.value);
 }
 
 export async function StorefrontHeader({
@@ -30,7 +28,7 @@ export async function StorefrontHeader({
   children?: ReactNode;
 }) {
   const result = await safeApiCall(async () => {
-    const staff = await getPrismaUser();
+    const staff = await getStaffUser();
     if (staff && staff.status === "ACTIVE" && isStaffUser(staff)) {
       return {
         kind: "staff" as const,

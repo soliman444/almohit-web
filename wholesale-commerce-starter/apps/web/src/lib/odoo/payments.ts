@@ -3,7 +3,7 @@ import { ApiClientError, ApiUnavailableError } from "../api/client";
 import { CommerceError } from "../commerce-errors";
 import { formatOdooAmount } from "./cart";
 import { odooRequest } from "./client";
-import type { OdooCookieAdapter } from "./types";
+import type { OdooCookieAdapter, OdooPaginatedList } from "./types";
 
 export type OdooPaymentCurrency = {
   id: number;
@@ -88,12 +88,12 @@ export function mapOdooPaymentError(error: unknown): CommerceError {
 }
 
 export async function listOdooPayments(cookies?: OdooCookieAdapter): Promise<StorefrontPayment[]> {
-  const payload = await odooRequest<OdooPaymentPayload[]>("/payments", {
+  const payload = await odooRequest<OdooPaginatedList<OdooPaymentPayload>>("/payments", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
-  return (payload ?? []).map(mapOdooPayment);
+  return (payload?.items ?? []).map(mapOdooPayment);
 }
 
 export async function getOdooPayment(paymentId: number, cookies?: OdooCookieAdapter): Promise<StorefrontPayment> {

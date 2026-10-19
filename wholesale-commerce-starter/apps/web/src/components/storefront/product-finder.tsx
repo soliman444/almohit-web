@@ -18,6 +18,7 @@ export function ProductFinder({
     return (
       <section className="sf-finder is-compact" id="finder">
         <form className="sf-finder-form" action="/products" method="get">
+          {query.q?.trim() ? <input type="hidden" name="q" value={query.q.trim()} /> : null}
           <label className="field">
             Category
             <select name="category" defaultValue={query.category ?? ""}>
@@ -39,18 +40,53 @@ export function ProductFinder({
             </label>
           )}
           <label className="field">
-            Minimum order
-            <select name="moq" defaultValue={query.moq ?? ""}>
-              <option value="">Any</option>
-              <option value="5">Up to 5</option>
-              <option value="10">Up to 10</option>
-            </select>
+            Minimum MOQ
+            <input
+              type="number"
+              name="min_moq"
+              min="0"
+              step="0.01"
+              defaultValue={query.min_moq ?? ""}
+              placeholder="Any"
+            />
+          </label>
+
+          <label className="field">
+            Maximum MOQ
+            <input
+              type="number"
+              name="max_moq"
+              min="0"
+              step="0.01"
+              defaultValue={query.max_moq ?? ""}
+              placeholder="Any"
+            />
           </label>
           <label className="field">
             Availability
             <select name="availability" defaultValue={query.availability ?? ""}>
               <option value="">All</option>
               <option value="in-stock">Ready to supply</option>
+            </select>
+          </label>
+          <label className="field">
+            Sort
+            <select
+              name="sort"
+              defaultValue={
+                query.sort === "name_asc" ||
+                query.sort === "name_desc" ||
+                query.sort === "newest" ||
+                query.sort === "oldest"
+                  ? query.sort
+                  : ""
+              }
+            >
+              <option value="">Default</option>
+              <option value="name_asc">Name A–Z</option>
+              <option value="name_desc">Name Z–A</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </label>
           <button className="btn" type="submit">Find products</button>
@@ -73,19 +109,65 @@ export function ProductFinder({
               ))}
             </select>
           </label>
+          {brands.length > 0 && (
+            <label className="field">
+              Brand
+              <select name="brand" defaultValue={query.brand ?? ""}>
+                <option value="">All brands</option>
+                {brands.map((item) => (
+                  <option key={item.slug} value={item.slug}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field">
-            Minimum order
-            <select name="moq" defaultValue={query.moq ?? ""}>
-              <option value="">Any</option>
-              <option value="5">Up to 5</option>
-              <option value="10">Up to 10</option>
-            </select>
+            Minimum MOQ
+            <input
+              type="number"
+              name="min_moq"
+              min="0"
+              step="0.01"
+              defaultValue={query.min_moq ?? ""}
+              placeholder="Any"
+            />
+          </label>
+
+          <label className="field">
+            Maximum MOQ
+            <input
+              type="number"
+              name="max_moq"
+              min="0"
+              step="0.01"
+              defaultValue={query.max_moq ?? ""}
+              placeholder="Any"
+            />
           </label>
           <label className="field">
             Availability
             <select name="availability" defaultValue={query.availability ?? ""}>
               <option value="">Any</option>
               <option value="in-stock">Ready to supply</option>
+            </select>
+          </label>
+          <label className="field">
+            Sort
+            <select
+              name="sort"
+              defaultValue={
+                query.sort === "name_asc" ||
+                query.sort === "name_desc" ||
+                query.sort === "newest" ||
+                query.sort === "oldest"
+                  ? query.sort
+                  : ""
+              }
+            >
+              <option value="">Default</option>
+              <option value="name_asc">Name A–Z</option>
+              <option value="name_desc">Name Z–A</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </label>
           <button className="btn" type="submit">Find products</button>

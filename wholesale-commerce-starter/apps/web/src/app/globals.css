@@ -305,6 +305,13 @@ button, input, textarea, select { font: inherit; }
   color: var(--sf-muted);
 }
 .sf-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.sf-brand-options {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 auto 12px;
+  max-width: 1040px;
+  gap: 8px;
+}
 .sf-pill {
   display: inline-flex;
   align-items: center;
@@ -731,6 +738,8 @@ button, input, textarea, select { font: inherit; }
 .sf-heading-meta {
   display: flex;
   gap: 12px;
+  margin: 0 auto 12px;
+  max-width: 1040px;
   margin-bottom: 12px;
   font-size: 13px;
   color: var(--sf-muted);
@@ -1255,6 +1264,7 @@ button, input, textarea, select { font: inherit; }
 }
 .sf-controls a { color: var(--sf-muted); font-family: var(--font-display), sans-serif; font-size: 1.15rem; }
 .sf-controls a.is-active, .sf-controls a:hover { color: var(--sf-flare); }
+.sf-controls .is-disabled { color: var(--sf-muted); opacity: 0.4; }
 .sf-empty { padding: 8vh 0; color: var(--sf-muted); font-size: 20px; }
 
 .sf-pdp-page {
@@ -1682,6 +1692,8 @@ button, input, textarea, select { font: inherit; }
   padding: 11px 0;
 }
 .sf-account { padding: 18vh var(--pad) 10vh; max-width: 740px; }
+.sf-orders-filters { margin: 28px 0 36px; }
+.sf-orders-filters .sf-btn { justify-self: start; }
 .sf-account h1 { font-family: var(--font-display), sans-serif; font-size: clamp(2rem, 4.4vw, 3.2rem); }
 .sf-business-page {
   width: min(var(--content-max), 100%);
@@ -1795,6 +1807,24 @@ button, input, textarea, select { font: inherit; }
 }
 .sf-biz-field textarea { min-height: 88px; resize: vertical; }
 .sf-biz-field input[type="file"] { padding: 9px 12px; }
+.sf-biz-readonly {
+  margin: 0;
+  min-height: 46px;
+  padding: 12px 13px;
+  border: 1px solid var(--sf-line);
+  border-radius: 12px;
+  background: #efeee9;
+  color: var(--sf-ink);
+  line-height: 1.4;
+}
+.sf-biz-photo {
+  display: block;
+  max-width: 220px;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--sf-line);
+}
 .sf-biz-actions {
   display: flex;
   justify-content: flex-end;

@@ -37,14 +37,17 @@ export default async function BusinessPage({
 
   const requestStatus = application?.status.toUpperCase() ?? null;
   const rejectionReason = application?.rejectionReason;
-  const locked = customer.state === "APPROVED" || customer.state === "PENDING" || requestStatus === "PENDING";
+  const locked = customer.state === "APPROVED" || customer.state === "PENDING"
+    || requestStatus === "APPROVED" || requestStatus === "PENDING";
   const defaultBusinessName = application?.companyName ?? customer.businessName ?? "";
   const role = parseAppRole(customer.role ?? "merchant");
   const copy = role === "buyer"
     ? {
       kicker: "Buyer",
       title: "Buyer account",
-      intro: "Office details for wholesale approval. Review happens in Odoo.",
+      intro: locked
+        ? "Office details are locked after submission. Changes are made in Odoo."
+        : "Office details for wholesale approval. Review happens in Odoo.",
       submit: "Submit buyer request",
       kyc: "Fill registration, address, contact, and what you source.",
     }
@@ -52,7 +55,9 @@ export default async function BusinessPage({
       ? {
         kicker: "Distributor",
         title: "Distributor account",
-        intro: "Fleet and coverage details for wholesale approval. Review happens in Odoo.",
+        intro: locked
+          ? "Fleet and coverage details are locked after submission. Changes are made in Odoo."
+          : "Fleet and coverage details for wholesale approval. Review happens in Odoo.",
         submit: "Submit distributor request",
         kyc: "Fill registration, depot address, contact, and coverage area.",
       }
@@ -60,14 +65,18 @@ export default async function BusinessPage({
       ? {
         kicker: "Marketer",
         title: "Marketer account",
-        intro: "Coverage details so you can enroll shop merchants. Review happens in Odoo.",
+        intro: locked
+          ? "Coverage details are locked after submission. Changes are made in Odoo."
+          : "Coverage details so you can enroll shop merchants. Review happens in Odoo.",
         submit: "Submit marketer request",
         kyc: "Fill your name, coverage area, city, contact, and base address.",
       }
       : {
         kicker: "Merchant",
         title: "Merchant account",
-        intro: "Shop, people, and payment details for wholesale approval. Review happens in Odoo.",
+        intro: locked
+          ? "Shop, people, and payment details are locked after submission. Changes are made in Odoo."
+          : "Shop, people, and payment details for wholesale approval. Review happens in Odoo.",
         submit: "Submit merchant request",
         kyc: "Fill registration, address, manager, bank account, and payment method.",
       };
@@ -78,6 +87,20 @@ export default async function BusinessPage({
       : requestStatus === "REJECTED"
         ? "is-rejected"
         : "";
+  const kycDefaults = {
+    businessName: defaultBusinessName,
+    taxNumber: application?.taxNumber ?? "",
+    businessType: application?.businessType ?? "",
+    phone: application?.phone ?? customer.phone ?? "",
+    city: application?.city ?? "",
+    address: application?.street ?? "",
+    managerName: application?.managerName ?? "",
+    employeeName: application?.employeeName ?? "",
+    bankAccount: application?.bankAccount ?? "",
+    paymentMethod: application?.paymentMethod ?? "",
+    notes: application?.notes ?? "",
+    shopImageUrl: application?.shopImageUrl,
+  };
 
   return (
     <StorefrontShell>
@@ -112,37 +135,22 @@ export default async function BusinessPage({
                       : commerceMessage(error)}
           </p>
         )}
-        <OnceForm className="sf-business-form" action={submitBusinessRequestAction}>
+        {locked ? (
           <div className="sf-biz-panel">
-            <TradeKycFields
-              role={role}
-              defaults={{
-                businessName: defaultBusinessName,
-                taxNumber: application?.taxNumber ?? "",
-                businessType: application?.businessType ?? "",
-                phone: application?.phone ?? customer.phone ?? "",
-                city: application?.city ?? "",
-                address: application?.street ?? "",
-                managerName: application?.managerName ?? "",
-                employeeName: application?.employeeName ?? "",
-                bankAccount: application?.bankAccount ?? "",
-                paymentMethod: application?.paymentMethod ?? "",
-                notes: application?.notes ?? "",
-              }}
-            />
-            <div className="sf-biz-actions">
-              <OnceSubmit className="sf-btn" disabled={locked} pendingLabel="Submitting…">
-                <span>
-                  {customer.state === "APPROVED"
-                    ? "Account approved"
-                    : requestStatus === "PENDING"
-                      ? "Request under review"
-                      : copy.submit}
-                </span>
-              </OnceSubmit>
-            </div>
+            <TradeKycFields role={role} readOnly defaults={kycDefaults} />
           </div>
-        </OnceForm>
+        ) : (
+          <OnceForm className="sf-business-form" action={submitBusinessRequestAction}>
+            <div className="sf-biz-panel">
+              <TradeKycFields role={role} defaults={kycDefaults} />
+              <div className="sf-biz-actions">
+                <OnceSubmit className="sf-btn" pendingLabel="Submitting…">
+                  <span>{copy.submit}</span>
+                </OnceSubmit>
+              </div>
+            </div>
+          </OnceForm>
+        )}
       </main>
     </StorefrontShell>
   );

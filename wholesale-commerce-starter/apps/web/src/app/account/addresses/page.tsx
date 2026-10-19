@@ -28,9 +28,9 @@ export default async function AddressesPage({
   const loaded = await safeApiCall(() => getAddresses());
   if (!loaded.ok) return <StorefrontUnavailable />;
   const addresses = loaded.data;
-  const odoo = session.kind === "odoo";
-  const defaultName = odoo ? session.customer.name : session.user.name;
-  const defaultPhone = odoo ? session.customer.phone ?? "" : session.user.phone ?? "";
+  const odoo = true;
+  const defaultName = session.customer.name;
+  const defaultPhone = session.customer.phone ?? "";
   const returnTo = safeStorefrontReturnTo(rawReturn ?? "", "/account/addresses");
   const defaultType = type === "invoice" ? "invoice" : "delivery";
 

@@ -1,5 +1,6 @@
 import { ApiClientError } from "../api/client";
 import { odooRequest } from "./client";
+import { rewriteOdooImageUrl } from "./images";
 import { mapAppRole, type OdooAppRole, type OdooCookieAdapter } from "./types";
 
 export type TradeApplicationStatus = "pending" | "approved" | "rejected";
@@ -82,7 +83,7 @@ export function mapTradeApplication(payload: OdooTradeApplicationPayload): Trade
     employeeName: payload.employee_name ?? null,
     bankAccount: payload.bank_account ?? null,
     paymentMethod: mapPaymentMethod(payload.payment_method),
-    shopImageUrl: payload.shop_image_url ?? null,
+    shopImageUrl: rewriteOdooImageUrl(payload.shop_image_url),
     notes: payload.notes ?? null,
     rejectionReason: payload.rejection_reason ?? null,
     createdAt: payload.created_at ? String(payload.created_at) : null,

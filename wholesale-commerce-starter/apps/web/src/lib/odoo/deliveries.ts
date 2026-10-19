@@ -1,7 +1,7 @@
 import { ApiClientError } from "../api/client";
 import { mapOdooAddress, type OdooAddressPayload, type StorefrontAddress } from "./addresses";
 import { odooRequest } from "./client";
-import type { OdooCookieAdapter } from "./types";
+import type { OdooCookieAdapter, OdooPaginatedList } from "./types";
 
 export const DELIVERY_STATUSES = ["pending", "waiting", "ready", "delivered", "cancelled"] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
@@ -95,12 +95,12 @@ export function mapOdooDelivery(payload: OdooDeliveryPayload): StorefrontDeliver
 
 export async function listOdooDeliveries(cookies?: OdooCookieAdapter): Promise<StorefrontDelivery[]> {
   try {
-    const payload = await odooRequest<OdooDeliveryPayload[]>("/deliveries", {
+    const payload = await odooRequest<OdooPaginatedList<OdooDeliveryPayload>>("/deliveries", {
       method: "GET",
       cookies,
       captureSetCookie: false,
     });
-    return (payload ?? []).map(mapOdooDelivery);
+    return (payload?.items ?? []).map(mapOdooDelivery);
   } catch (error) {
     if (isUnauthenticated(error)) return [];
     throw error;

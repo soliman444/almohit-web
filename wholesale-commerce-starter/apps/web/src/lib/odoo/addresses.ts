@@ -3,7 +3,7 @@ import { ApiClientError } from "../api/client";
 import { CommerceError } from "../commerce-errors";
 import { parseOdooRecordId } from "./catalog";
 import { odooRequest } from "./client";
-import type { OdooCookieAdapter } from "./types";
+import type { OdooCookieAdapter, OdooPaginatedList } from "./types";
 
 export type OdooAddressType = "delivery" | "invoice";
 
@@ -107,12 +107,12 @@ export function mapOdooAddressError(error: unknown): CommerceError {
 
 export async function listOdooAddresses(cookies?: OdooCookieAdapter): Promise<StorefrontAddress[]> {
   try {
-    const payload = await odooRequest<OdooAddressPayload[]>("/addresses", {
+    const payload = await odooRequest<OdooPaginatedList<OdooAddressPayload>>("/addresses", {
       method: "GET",
       cookies,
       captureSetCookie: false,
     });
-    return (payload ?? []).map(mapOdooAddress);
+    return (payload?.items ?? []).map(mapOdooAddress);
   } catch (error) {
     if (isUnauthenticated(error)) return [];
     throw error;

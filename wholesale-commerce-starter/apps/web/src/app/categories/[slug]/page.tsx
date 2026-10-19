@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { CatalogPager } from "../../../components/storefront/catalog-pager";
 import { CategoryHero } from "../../../components/storefront/category-hero";
 import { CategoryMosaic } from "../../../components/storefront/category-mosaic";
 import { DealBanner } from "../../../components/storefront/promo-system";
@@ -11,24 +12,39 @@ import { StorefrontUnavailable } from "../../../components/system/storefront-una
 import { fetchStorefrontCategory, fetchStorefrontCategoryCards } from "../../../lib/api/categories";
 import { fetchStorefrontProducts } from "../../../lib/api/products";
 import { safeApiCall } from "../../../lib/api/safe";
+import { parseCatalogPage, storefrontCatalogHref } from "../../../lib/storefront-filters";
 import { promoForCategory } from "../../../lib/storefront-promos";
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { slug } = await params;
+  const query = await searchParams;
+  const page = parseCatalogPage(query.page);
   const loaded = await safeApiCall(async () => {
     const category = await fetchStorefrontCategory(slug);
     if (!category) return null;
-    const [cards, products] = await Promise.all([
+    const [cards, listed] = await Promise.all([
       fetchStorefrontCategoryCards(),
-      fetchStorefrontProducts({ category: slug, includeDescendants: true }),
+      fetchStorefrontProducts({
+        category: slug,
+        includeChildren: true,
+        page,
+      }),
     ]);
-    return { category, cards, products };
+    return { category, cards, listed };
   });
   if (!loaded.ok) return <StorefrontUnavailable />;
   if (!loaded.data) notFound();
-  const { category, cards, products } = loaded.data;
+  const { category, cards, listed } = loaded.data;
+  const products = listed.items;
+  const pagination = listed.pagination;
   const card = cards.find((item) => item.id === category.id);
   const configuredHero = resolveCategoryHero(category.slug, {
     title: category.name,
@@ -58,7 +74,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       <CategoryHero
         {...hero}
         slug={category.slug}
-        productCount={products.length}
+        productCount={pagination.total}
         focalX={category.heroFocalX}
         focalY={category.heroFocalY}
         frameScale={category.heroScale}
@@ -79,8 +95,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       )}
 
       <section className="sf-section is-browse is-catalog">
-        <SectionHeading title="All products" copy={`${products.length} items in this collection.`} />
+        <SectionHeading title="All products" copy={`${pagination.total} items in this collection.`} />
         <ProductGrid products={products} variant="catalog" />
+        <CatalogPager
+          pagination={pagination}
+          hrefForPage={(nextPage) => storefrontCatalogHref(`/categories/${slug}`, query, { page: String(nextPage) })}
+        />
       </section>
 
       {promo && (

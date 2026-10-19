@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "../../../../lib/auth";
 import { AdminHeader, StatusBadge } from "../../../../components/admin/admin-ui";
-import { getOdooAdminOrder, odooBackendOrderUrl, staffCredentialsConfigured } from "../../../../lib/odoo/admin-orders";
+import { getOdooAdminOrder, odooBackendOrderUrl } from "../../../../lib/odoo/admin-orders";
 import { parseOdooRecordId } from "../../../../lib/odoo/catalog";
 
 export const dynamic = "force-dynamic";
@@ -16,15 +16,6 @@ export default async function AdminOrderDetailPage({
   const { id } = await params;
   const orderId = parseOdooRecordId(id);
   if (!orderId) notFound();
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Order" actions={<Link className="btn secondary" href="/admin/orders">All orders</Link>} />
-        <p className="error">Odoo staff credentials are not configured.</p>
-      </div>
-    );
-  }
 
   let order;
   try {

@@ -19,6 +19,10 @@ export type OdooApiError = {
 
 export type OdooApiResponse<T> = OdooApiSuccess<T> | OdooApiError;
 
+export type OdooPaginatedList<T> = {
+  items?: T[];
+};
+
 export type OdooPaymentTermPayload = {
   id: number;
   name: string;
@@ -44,6 +48,7 @@ export type OdooAuthUserPayload = {
   role?: string | null;
   payment_term?: OdooPaymentTermPayload | null;
   price_group?: OdooPriceGroupPayload | null;
+  is_staff?: boolean;
 };
 
 export type CurrentCustomer = {
@@ -56,6 +61,7 @@ export type CurrentCustomer = {
   role: OdooAppRole;
   paymentTerm: PaymentTerm | null;
   priceGroupName: string | null;
+  isStaff: boolean;
 };
 
 export type OdooHealth = {
@@ -90,7 +96,7 @@ export function mapTradeStatus(value: string | null | undefined): OdooTradeStatu
 }
 
 export function isOdooAppRole(value: string): value is OdooAppRole {
-  return value === "merchant" || value === "buyer" || value === "distributor";
+  return value === "merchant" || value === "buyer" || value === "distributor" || value === "marketer";
 }
 
 export function mapAppRole(value: string | null | undefined): OdooAppRole {
@@ -124,5 +130,6 @@ export function mapCurrentCustomer(payload: OdooAuthUserPayload): CurrentCustome
     role: mapAppRole(payload.role),
     paymentTerm: mapPaymentTerm(payload.payment_term),
     priceGroupName: mapPriceGroupName(payload.price_group),
+    isStaff: Boolean(payload.is_staff),
   };
 }

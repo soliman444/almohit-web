@@ -3,7 +3,7 @@ import { ApiClientError, ApiUnavailableError } from "../api/client";
 import { CommerceError } from "../commerce-errors";
 import { formatOdooAmount } from "./cart";
 import { odooRequest } from "./client";
-import { mapPaymentTerm, type OdooCookieAdapter, type OdooPaymentTermPayload, type PaymentTerm } from "./types";
+import { mapPaymentTerm, type OdooCookieAdapter, type OdooPaginatedList, type OdooPaymentTermPayload, type PaymentTerm } from "./types";
 
 export type OdooNamedRef = {
   id: number;
@@ -151,12 +151,12 @@ export function mapOdooInvoiceError(error: unknown): CommerceError {
 }
 
 export async function listOdooInvoices(cookies?: OdooCookieAdapter): Promise<StorefrontInvoice[]> {
-  const payload = await odooRequest<OdooInvoicePayload[]>("/invoices", {
+  const payload = await odooRequest<OdooPaginatedList<OdooInvoicePayload>>("/invoices", {
     method: "GET",
     cookies,
     captureSetCookie: false,
   });
-  return (payload ?? []).map(mapOdooInvoice);
+  return (payload?.items ?? []).map(mapOdooInvoice);
 }
 
 export async function getOdooInvoice(invoiceId: number, cookies?: OdooCookieAdapter): Promise<StorefrontInvoice> {

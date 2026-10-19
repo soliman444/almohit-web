@@ -1,4 +1,4 @@
-import { odooStaffRequest, staffCredentialsConfigured } from "./staff";
+import { odooStaffRequest } from "./staff";
 import {
   mapTradeApplication,
   type OdooTradeApplicationPayload,
@@ -77,5 +77,4 @@ export async function rejectOdooAdminTradeApplication(
   return mapAdminTradeApplication(payload);
 }
 
-export { staffCredentialsConfigured };
 export type { TradeApplicationStatus };

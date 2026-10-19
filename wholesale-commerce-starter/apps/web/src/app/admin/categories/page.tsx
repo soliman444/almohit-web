@@ -2,7 +2,7 @@ import Link from "next/link";
 import { hasPermission, requirePermission } from "../../../lib/auth";
 import { queryValue } from "../../../lib/admin-query";
 import { AdminEmpty, AdminFilters, AdminHeader } from "../../../components/admin/admin-ui";
-import { listOdooAdminCategories, odooBackendCategoryUrl, staffCredentialsConfigured } from "../../../lib/odoo/admin-taxonomy";
+import { listOdooAdminCategories, odooBackendCategoryUrl } from "../../../lib/odoo/admin-taxonomy";
 
 export default async function AdminCategoriesPage({
   searchParams,
@@ -13,15 +13,6 @@ export default async function AdminCategoriesPage({
   const params = await searchParams;
   const q = queryValue(params.q).toLowerCase();
   const canCreate = hasPermission(admin, "category.create");
-
-  if (!staffCredentialsConfigured()) {
-    return (
-      <div className="stack">
-        <AdminHeader title="Categories" actions={canCreate ? <Link className="btn" href="/admin/categories/new">New category</Link> : null} />
-        <p className="error">Odoo staff credentials are not configured. Categories are read from Odoo only.</p>
-      </div>
-    );
-  }
 
   let categories;
   try {

@@ -1,6 +1,6 @@
 import { getOdooApiUrl } from "./config";
 import { mapOdooOrder, mapOdooOrderSummary, type OdooOrderPayload, type StorefrontOrderDetail } from "./orders";
-import { odooStaffRequest, staffCredentialsConfigured } from "./staff";
+import { odooStaffRequest } from "./staff";
 
 export type OdooAdminOrderCustomer = {
   partner_id: number;
@@ -90,4 +90,3 @@ export function odooBackendOrderUrl(orderId: number) {
   return `${getOdooApiUrl()}/web#id=${orderId}&model=sale.order&view_type=form`;
 }
 
-export { staffCredentialsConfigured };

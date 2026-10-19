@@ -1,67 +1,26 @@
-import { createRoleAction } from "../../../lib/actions";
+import Link from "next/link";
 import { requirePermission } from "../../../lib/auth";
-import { prisma } from "../../../lib/db/prisma";
-import { queryValue } from "../../../lib/admin-query";
-import { AdminEmpty, AdminFilters, AdminHeader } from "../../../components/admin/admin-ui";
+import { AdminHeader } from "../../../components/admin/admin-ui";
+import { odooBackendGroupsUrl, odooBackendUsersUrl } from "../../../lib/odoo/admin-customers";
 
-export default async function RolesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export default async function RolesPage() {
   await requirePermission("role.view");
-  const rawQuery = queryValue((await searchParams).q);
-  const q = rawQuery.toLowerCase();
-  const [roles, permissions] = await Promise.all([
-    prisma.role.findMany({
-      include: { permissions: { include: { permission: true } }, _count: { select: { users: true } } },
-      orderBy: { name: "asc" },
-    }),
-    prisma.permission.findMany({ orderBy: { key: "asc" } }),
-  ]);
-  const visible = roles.filter((role) => !q || role.name.toLowerCase().includes(q) || role.slug.toLowerCase().includes(q));
 
   return (
     <div className="stack">
-      <AdminHeader title="Roles & permissions" count={visible.length} hint="Website staff permissions. Trade customers use Odoo portal roles." />
-      <AdminFilters action="/admin/roles" q={rawQuery} qPlaceholder="Role name or slug" />
-      <form className="card stack" action={createRoleAction}>
-        <h2>Create a new role</h2>
-        <div className="grid">
-          <label className="field">Name<input name="name" required /></label>
-          <label className="field">Slug<input name="slug" required placeholder="product-manager" /></label>
-        </div>
-        <div className="permission-grid">
-          {permissions.map((permission) => (
-            <label key={permission.id}>
-              <input type="checkbox" name="permissions" value={permission.id} />
-              {permission.key}
-            </label>
-          ))}
-        </div>
-        <button className="btn">Create role</button>
-      </form>
-      {visible.length === 0 ? (
-        <div className="card"><AdminEmpty title="No roles match this search." /></div>
-      ) : (
-        <div className="grid">
-          {visible.map((role) => (
-            <div className="card stack" key={role.id}>
-              <div>
-                <span className="badge is-muted">{role._count.users} users</span>
-                <h2>{role.name}</h2>
-                <p className="muted">{role.slug}</p>
-              </div>
-              <div className="admin-chips">
-                {role.permissions.map((entry) => (
-                  <span className="badge is-muted" key={entry.permission.id}>{entry.permission.key}</span>
-                ))}
-                {role.permissions.length === 0 && <span className="muted">No permissions</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <AdminHeader
+        title="Roles & permissions"
+        hint="Access is controlled by native Odoo groups. This website does not keep a separate staff permission table."
+      />
+      <div className="card stack">
+        <p>Create staff, assign groups, and change passwords in Odoo.</p>
+        <p className="muted">Internal users can open this admin. Portal customers use the storefront only. Odoo access rights still apply when saving products, orders, or partners.</p>
+        <p>
+          <Link className="btn" href={odooBackendUsersUrl()} target="_blank" rel="noreferrer">Users in Odoo</Link>
+          {" "}
+          <Link className="btn secondary" href={odooBackendGroupsUrl()} target="_blank" rel="noreferrer">Groups in Odoo</Link>
+        </p>
+      </div>
     </div>
   );
 }

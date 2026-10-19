@@ -2,22 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { requirePermission, requireUser } from "./auth";
 import { redirectIfPrismaStaff } from "./storefront-session";
-import { isApprovedBuyer } from "./commerce";
 import { addCartItem, clearCart, removeCartItem, updateCartItem } from "./api/cart";
 import { createAddress, deleteAddress, setDefaultAddress, updateAddress } from "./api/addresses";
-import { placeOrder } from "./api/checkout";
-import { checkoutOdooCart, mapOdooCheckoutError } from "./odoo/checkout";
 import { parseOdooRecordId } from "./odoo/catalog";
 import { mapOdooAddressError } from "./odoo/addresses";
-import { cancelOrder, updateOrderStatus } from "./api/orders";
-import { recordManualPayment } from "./api/payments";
-import { updateAdminOrderNotes } from "./api/admin-orders";
 import { ApiClientError, ApiUnavailableError } from "./api/client";
 import { CommerceError, commerceErrorCode, type CommerceErrorCode } from "./commerce-errors";
-import { prisma } from "./db/prisma";
 import { mapOdooCartError } from "./odoo/cart";
 import type { CartMutationResult, CartView } from "./cart-view";
 
@@ -92,22 +83,13 @@ function mapCartApiError(error: unknown): CommerceError {
   return error instanceof CommerceError ? error : new CommerceError("CART");
 }
 
-async function requireBuyer() {
-  const user = await requireUser();
-  if (!isApprovedBuyer(user) || !user.customer) redirect("/account/business");
-  return user;
-}
-
 async function requireStorefrontBuyer() {
   await redirectIfPrismaStaff();
   const odoo = await import("./odoo/auth");
-  if (await odoo.hasOdooSession()) {
-    const customer = await odoo.getCurrentCustomer();
-    if (!customer) redirect("/login");
-    if (customer.tradeStatus !== "approved") redirect("/account/business");
-    return;
-  }
-  await requireBuyer();
+  if (!(await odoo.hasOdooSession())) redirect("/login");
+  const customer = await odoo.getCurrentCustomer();
+  if (!customer) redirect("/login");
+  if (customer.tradeStatus !== "approved") redirect("/account/business");
 }
 
 async function runCartMutation(run: () => Promise<CartView | null>): Promise<CartMutationResult> {
@@ -254,193 +236,6 @@ export async function setDefaultAddressAction(formData: FormData) {
   redirect("/account/addresses");
 }
 
-function mapCheckoutApiError(error: unknown): CommerceError {
-  const unavailable = mapUnavailable(error);
-  if (unavailable) return unavailable;
-  if (error instanceof ApiClientError) {
-    const mapped: Record<string, CommerceErrorCode> = {
-      AUTH_REQUIRED: "UNAPPROVED",
-      CUSTOMER_REQUIRED: "UNAPPROVED",
-      PRICE_ACCESS_DENIED: "UNAPPROVED",
-      WHOLESALE_APPROVAL_REQUIRED: "UNAPPROVED",
-      CART_NOT_FOUND: "EMPTY",
-      CART_NOT_ACTIVE: "EMPTY",
-      CART_EMPTY: "EMPTY",
-      PRODUCT_UNAVAILABLE: "PRODUCT",
-      VARIANT_NOT_FOUND: "VARIANT",
-      PRICE_UNAVAILABLE: "PRICE",
-      MOQ_NOT_MET: "MINIMUM",
-      MIN_ORDER_QUANTITY_NOT_MET: "MINIMUM",
-      INSUFFICIENT_STOCK: "STOCK",
-      INVALID_QUANTITY: "QUANTITY",
-      ADDRESS_NOT_FOUND: "ADDRESS",
-      ADDRESS_TYPE_INVALID: "ADDRESS",
-      INVALID_ADDRESS: "ADDRESS",
-      INVALID_PAYMENT_METHOD: "CHECKOUT",
-      CHECKOUT_CONFLICT: "CHECKOUT",
-      CART_ALREADY_CHECKED_OUT: "CHECKOUT",
-    };
-    if (mapped[error.code]) {
-      if (error.code === "MIN_ORDER_QUANTITY_NOT_MET" || error.code === "INSUFFICIENT_STOCK") {
-        return mapOdooCartError(error);
-      }
-      return new CommerceError(mapped[error.code]);
-    }
-    return mapOdooCheckoutError(error);
-  }
-  return error instanceof CommerceError ? error : new CommerceError("CHECKOUT");
-}
-
-export async function placeOrderAction(formData: FormData) {
-  await requireStorefrontBuyer();
-  const odoo = await import("./odoo/auth");
-  if (await odoo.hasOdooSession()) {
-    const shippingAddressId = parseOdooRecordId(value(formData, "shippingAddressId"));
-    const invoiceAddressId = parseOdooRecordId(value(formData, "invoiceAddressId"));
-    if (!shippingAddressId || !invoiceAddressId) {
-      redirect(withError("/checkout", new CommerceError("ADDRESS")));
-    }
-    let orderId = "";
-    try {
-      const order = await checkoutOdooCart({
-        shipping_address_id: shippingAddressId,
-        invoice_address_id: invoiceAddressId,
-      });
-      orderId = order.id;
-    } catch (error) {
-      redirect(withError("/checkout", mapCheckoutApiError(error)));
-    }
-    revalidateStore();
-    redirect(`/account/orders/${orderId}?placed=1`);
-  }
-
-  const paymentMethod = z.enum(["CASH", "BANK_TRANSFER", "MANUAL"]).parse(value(formData, "paymentMethod") || "BANK_TRANSFER");
-  let orderNumber = "";
-  try {
-    const result = await placeOrder({
-      cartId: value(formData, "cartId"),
-      addressId: value(formData, "addressId") || undefined,
-      recipient: value(formData, "recipient"),
-      phone: value(formData, "phone") || undefined,
-      line1: value(formData, "line1"),
-      line2: value(formData, "line2") || undefined,
-      city: value(formData, "city"),
-      region: value(formData, "region") || undefined,
-      postalCode: value(formData, "postalCode") || undefined,
-      country: value(formData, "country") || "SA",
-      customerNotes: value(formData, "customerNotes") || undefined,
-      paymentMethod,
-      saveAddress: formData.get("saveAddress") === "on" && !value(formData, "addressId"),
-    });
-    orderNumber = result.order.orderNumber;
-  } catch (error) {
-    redirect(withError("/checkout", mapCheckoutApiError(error)));
-  }
-  revalidateStore();
-  redirect(`/account/orders/${orderNumber}?placed=1`);
-}
-
-function mapOrderStatusApiError(error: unknown): CommerceError {
-  const unavailable = mapUnavailable(error);
-  if (unavailable) return unavailable;
-  if (error instanceof ApiClientError) {
-    const mapped: Record<string, CommerceErrorCode> = {
-      AUTH_REQUIRED: "UNAPPROVED",
-      CUSTOMER_REQUIRED: "UNAPPROVED",
-      PERMISSION_DENIED: "UNAPPROVED",
-      ORDER_NOT_FOUND: "ORDER",
-      ORDER_STATUS_INVALID: "TRANSITION",
-      ORDER_CANNOT_CANCEL: "TRANSITION",
-      ORDER_CONFLICT: "TRANSITION",
-      INVENTORY_CONFLICT: "STOCK",
-    };
-    return new CommerceError(mapped[error.code] ?? "TRANSITION");
-  }
-  return error instanceof CommerceError ? error : new CommerceError("TRANSITION");
-}
-
-export async function updateOrderStatusAction(formData: FormData) {
-  const status = z.enum(["PENDING", "CONFIRMED", "PROCESSING", "READY", "SHIPPED", "DELIVERED", "CANCELLED"]).parse(value(formData, "status"));
-  const admin = await requirePermission(status === "CANCELLED" ? "order.cancel" : "order.update");
-  const orderId = value(formData, "orderId");
-  try {
-    const result = await (status === "CANCELLED"
-      ? cancelOrder(orderId, { notes: value(formData, "notes") || undefined })
-      : updateOrderStatus(orderId, { status, notes: value(formData, "notes") || undefined }));
-    await prisma.auditLog.create({
-      data: {
-        userId: admin.id,
-        action: status === "CANCELLED" ? "ORDER_CANCELLED" : "ORDER_STATUS_CHANGED",
-        entityType: "Order",
-        entityId: orderId,
-        newData: { status, orderNumber: result.order.orderNumber },
-      },
-    });
-  } catch (error) {
-    redirect(withError(`/admin/orders/${orderId}`, mapOrderStatusApiError(error)));
-  }
-  revalidateStore();
-  redirect(`/admin/orders/${orderId}`);
-}
-
-function mapAdminNoteApiError(error: unknown): CommerceError {
-  const unavailable = mapUnavailable(error);
-  if (unavailable) return unavailable;
-  if (error instanceof ApiClientError) {
-    const mapped: Record<string, CommerceErrorCode> = {
-      AUTH_REQUIRED: "UNAPPROVED",
-      PERMISSION_DENIED: "UNAPPROVED",
-      ORDER_NOT_FOUND: "ORDER",
-    };
-    return new CommerceError(mapped[error.code] ?? "ORDER");
-  }
-  return error instanceof CommerceError ? error : new CommerceError("ORDER");
-}
-
-export async function updateAdminOrderNoteAction(formData: FormData) {
-  const admin = await requirePermission("order.update");
-  const orderId = value(formData, "orderId");
-  const adminNotes = value(formData, "adminNotes") || null;
-  try {
-    const result = await updateAdminOrderNotes(orderId, adminNotes);
-    await prisma.auditLog.create({
-      data: {
-        userId: admin.id,
-        action: "ORDER_ADMIN_NOTE",
-        entityType: "Order",
-        entityId: orderId,
-        oldData: { adminNotes: result.previousAdminNotes },
-        newData: { adminNotes: result.order.adminNotes },
-      },
-    });
-  } catch (error) {
-    if (error instanceof ApiClientError && (error.statusCode === 404 || error.code === "ORDER_NOT_FOUND")) {
-      return;
-    }
-    redirect(withError(`/admin/orders/${orderId}`, mapAdminNoteApiError(error)));
-  }
-  revalidateStore();
-  redirect(`/admin/orders/${orderId}`);
-}
-
-function mapPaymentApiError(error: unknown): CommerceError {
-  const unavailable = mapUnavailable(error);
-  if (unavailable) return unavailable;
-  if (error instanceof ApiClientError) {
-    const mapped: Record<string, CommerceErrorCode> = {
-      AUTH_REQUIRED: "UNAPPROVED",
-      PERMISSION_DENIED: "UNAPPROVED",
-      ORDER_NOT_FOUND: "ORDER",
-      ORDER_CANCELLED: "CANCELLED",
-      INVALID_AMOUNT: "AMOUNT",
-      OVERPAY: "OVERPAY",
-      INVALID_PAYMENT_METHOD: "AMOUNT",
-    };
-    return new CommerceError(mapped[error.code] ?? "AMOUNT");
-  }
-  return error instanceof CommerceError ? error : new CommerceError("AMOUNT");
-}
-
 export type StorefrontPayResult =
   | { ok: true; alreadyPaid: true }
   | {
@@ -540,30 +335,4 @@ function mapOdooInvoicePaymentError(error: unknown): CommerceError {
     return new CommerceError(mapped[error.code] ?? "PAYMENT");
   }
   return error instanceof CommerceError ? error : new CommerceError("PAYMENT");
-}
-
-export async function recordPaymentAction(formData: FormData) {
-  const admin = await requirePermission("payment.update");
-  const orderId = value(formData, "orderId");
-  try {
-    const result = await recordManualPayment(orderId, {
-      amount: value(formData, "amount"),
-      method: z.enum(["CASH", "BANK_TRANSFER", "MANUAL"]).parse(value(formData, "method") || "MANUAL"),
-      reference: value(formData, "reference") || undefined,
-      markPaid: formData.get("markPaid") === "on",
-    });
-    await prisma.auditLog.create({
-      data: {
-        userId: admin.id,
-        action: "PAYMENT_RECORDED",
-        entityType: "Order",
-        entityId: orderId,
-        newData: { paymentStatus: result.order.paymentStatus, amount: value(formData, "amount") },
-      },
-    });
-  } catch (error) {
-    redirect(withError(`/admin/orders/${orderId}`, mapPaymentApiError(error)));
-  }
-  revalidateStore();
-  redirect(`/admin/orders/${orderId}`);
 }
