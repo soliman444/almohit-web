@@ -3,24 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "dev": "npm run dev:web",
-    "typecheck": "tsc --noEmit -p packages/contracts/tsconfig.json && tsc --noEmit -p packages/validation/tsconfig.json && tsc --noEmit -p packages/config/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json",
-    "dev:web": "npm run dev -w @almohit/web",
-    "build": "npm run build -w @almohit/contracts && npm run build -w @almohit/validation && npm run build -w @almohit/config && npm run build -w @almohit/web",
-    "build:web": "npm run build -w @almohit/web",
-    "start": "npm run start -w @almohit/web",
-    "lint": "npm run lint -w @almohit/web --if-present"
+    "dev": "next dev -p 8069",
+    "build": "next typegen && next build",
+    "start": "next start -p 8069",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "motion": "^14.0.0",
+    "next": "16.3.8",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.3.8",
     "typescript": "^5.9.0"
   }
 }
