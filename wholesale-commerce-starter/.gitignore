@@ -45,6 +45,7 @@ coverage/
 
 # vercel / deploy
 .vercel
+.netlify
 
 # editor and OS
 .cursor/

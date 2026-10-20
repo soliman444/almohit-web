@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build"
+  publish = "apps/web/.next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22"
+  ODOO_API_URL = "https://trading.m-arabi.com"
+  ODOO_DB = "odoo17db"
+
+[context.production.environment]
+  ODOO_API_URL = "https://trading.m-arabi.com"
+  ODOO_DB = "odoo17db"
+
+[context.deploy-preview.environment]
+  ODOO_API_URL = "https://trading.m-arabi.com"
+  ODOO_DB = "odoo17db"
+
+[context.branch-deploy.environment]
+  ODOO_API_URL = "https://trading.m-arabi.com"
+  ODOO_DB = "odoo17db"
